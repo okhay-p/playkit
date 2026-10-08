@@ -17,17 +17,30 @@ Tailwind replaces the earlier CSS Modules recommendation. TanStack Router replac
 
 Expected supporting integrations include React’s Vite plugin and Tailwind’s Vite plugin. TanStack’s route-generation plugin is an option if file-based routing is selected. Inform the user of the exact package set before scaffolding or installation.
 
-## Still to decide
+## Production implementation dependencies
 
-- TypeScript configuration and exact package versions.
-- IndexedDB wrapper: Dexie was recommended; idb is an alternative.
-- Runtime validation: Zod was recommended.
-- Offline tooling: vite-plugin-pwa was recommended.
-- Test tooling: Vitest and Playwright were recommended.
-- Hand evaluator implementation or library.
-- Exact backend/auth packages, deployment configuration, and frontend hosting configuration.
+The following direct packages were announced before installation for the shared-poker milestone. Exact installed versions are recorded in `package-lock.json`; `package.json` declares compatible version ranges.
 
-No packages have been installed on main. The prototype branch’s dependencies are not the production dependency list.
+| Packages | Purpose |
+| --- | --- |
+| `react`, `react-dom`, `vite` | Agreed frontend and build/dev server |
+| `tailwindcss`, `@tailwindcss/vite` | Agreed styling and Vite integration |
+| `@tanstack/react-router` | Agreed navigation; code-based routes with lazy UI loading |
+| `dexie` | Atomic IndexedDB persistence before publishing accepted actions |
+| `zod` | Saved-state and command validation at trust boundaries |
+| `@fontsource/dm-sans`, `@fontsource/nunito` | Locally bundled brand typography, available offline |
+| `typescript`, `@types/node`, `@types/react`, `@types/react-dom` | Strict checking and matching platform types |
+| `@vitejs/plugin-react` | React compilation and development refresh |
+| `vite-plugin-pwa` | Offline shell precaching and prompted updates |
+| `vitest` | Pure engine/evaluator rule tests |
+| `@playwright/test` | Production-browser integration tests |
+| `prettier` | Development-only source formatting |
+
+The evaluator is implemented directly in `src/poker/cards.ts`; no poker evaluation library is added. React's native hooks manage UI/store subscriptions; no additional state-management or query library is installed. TypeScript uses strict checking and bundler resolution. Node 22.12+ is required.
+
+Transitive integrations include Workbox for the service worker, Rolldown/esbuild-related build tooling, and TanStack/Dexie internals. They are recorded by the lockfile rather than independently selected as application libraries.
+
+Still to decide at later milestones: exact backend/auth SDK packages, deployment/host configuration, room authorization/retention, and any storage for future account features. Advance dependency notice continues to apply.
 
 ## Selected backend direction
 
