@@ -1,0 +1,139 @@
+@import "tailwindcss";
+@theme {
+  --font-sans: "DM Sans", sans-serif;
+  --font-display: "Nunito", sans-serif;
+  --color-play-blue: #3b82f6;
+  --color-play-green: #22c55e;
+  --color-play-coral: #f87171;
+  --color-play-yellow: #fbbf24;
+  --color-play-ink: #0f172a;
+}
+:root {
+  color: #0f172a;
+  background: #fafbf9;
+  font-family: var(--font-sans);
+  font-synthesis: none;
+}
+button,
+a,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 3px;
+}
+.underline-play {
+  position: relative;
+  white-space: nowrap;
+}
+.underline-play::after {
+  content: "";
+  position: absolute;
+  bottom: -0.08em;
+  left: 10%;
+  width: 90%;
+  height: 0.1em;
+  background: #fbbf24;
+  border-radius: 50%;
+  transform: rotate(-5deg);
+}
+.poker-surface {
+  position: relative;
+  min-height: 470px;
+}
+.table-felt {
+  position: absolute;
+  inset: 20% 12%;
+  border-radius: 50%;
+  background: #eaf8ee;
+  border: 12px solid #fff;
+  box-shadow:
+    0 0 0 1px #dcecdf,
+    inset 0 0 0 2px #d5eddb;
+}
+.seat {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 138px;
+}
+.chip {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 5px dashed #dbeafe;
+  background: #3b82f6;
+  box-shadow:
+    0 4px 0 #2563eb,
+    0 8px 0 #bfdbfe;
+}
+.chip.green {
+  background: #22c55e;
+  border-color: #dcfce7;
+  box-shadow:
+    0 4px 0 #16a34a,
+    0 8px 0 #bbf7d0;
+}
+.chip.coral {
+  background: #f87171;
+  border-color: #fee2e2;
+  box-shadow:
+    0 4px 0 #ef4444,
+    0 8px 0 #fecaca;
+}
+@media (max-width: 640px) {
+  .poker-surface {
+    min-height: 440px;
+  }
+  .seat {
+    width: 104px;
+  }
+  .table-felt {
+    inset: 18% 9%;
+    border-width: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+.poker-surface.crowded {
+  min-height: 640px;
+}
+.crowded .seat {
+  width: 112px;
+}
+@media (max-width: 640px) {
+  .poker-surface.crowded {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  .crowded .table-felt {
+    display: none;
+  }
+  .crowded > .absolute {
+    position: relative;
+    grid-column: span 2;
+    padding: 1.5rem;
+    background: #eaf8ee;
+    border-radius: 1.5rem;
+  }
+  .crowded .seat {
+    position: static;
+    transform: none;
+    width: auto;
+  }
+}

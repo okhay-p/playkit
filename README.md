@@ -1,15 +1,50 @@
-# Playkit
+# PlayKit
 
-A webapp that helps people play physical games together. A shared device is the default; personal phones are optional.
+Tools for real-world play: a webapp that helps people play physical games together, with a shared device as the default.
 
-Planned features:
+The first implementation milestone provides **shared-device no-limit Texas Hold’em**: setup for 2–10 seats, betting and turn enforcement, explicit physical dealing, showdown entry and mucking, side-pot payout previews, settlement, undo/history, rebuys, cashouts, and local recovery. Its interface follows [A — Table Club](docs/ui-direction.md).
 
-- No-limit Texas Hold’em betting, stack tracking, and showdown settlement for physical cards.
-- Optional synchronized poker sessions over WebRTC.
-- A shared-device chess clock.
+WebRTC phone synchronization, Cloudflare signaling/TURN, the chess clock, and future Clerk accounts are later milestones. They are not implemented or provisioned yet. Shared-device poker needs no backend or account.
 
-The project is currently in the specification stage. See [the implementation spec](docs/implementation-spec.md) for agreed behavior, architecture, and delivery milestones.
+## Run locally
 
-The selected UI direction is [A — Table Club](docs/ui-direction.md). Interactive comparison prototypes are preserved on the [`prototype/ui-variants` branch](https://github.com/okhay-p/playkit/tree/prototype/ui-variants).
+Use Node.js **22.12 or newer**.
 
-Agreed frontend: React + Vite, Tailwind CSS, and TanStack Router. Multiplayer will use native WebRTC. See [tech stack decisions](docs/tech-stack.md) for supporting choices still under discussion.
+```sh
+npm ci
+npm run dev
+```
+
+Open `http://localhost:5173`. The dev server binds all interfaces, so a device on your Tailscale network can also use `http://<this-machine-tailscale-ip>:5173`. Plain HTTP on an IP cannot install an offline service worker; use localhost or HTTPS for offline verification.
+
+## Production and offline verification
+
+```sh
+npm run build
+npm run preview
+```
+
+The production preview uses `http://localhost:4173`. After the first successful load and the “Offline ready” indicator, cached single-device play continues without internet, including a reload and explicit resume. Fonts are bundled locally. App updates are prompted and only accepted between hands.
+
+The static `dist/` output can be hosted over HTTPS. Configure any host to serve `index.html` for app navigation routes. No deployment or Cloudflare account setup has been performed yet.
+
+## Checks
+
+```sh
+npm run check
+npx playwright install chromium
+npm run test:e2e
+```
+
+The browser suite starts and stops its own production preview server. It covers desktop and touch phone Chromium contexts. Real Safari/iOS and physical-device usability are still release validation tasks.
+
+## Implementation references
+
+- [Implementation spec and milestones](docs/implementation-spec.md)
+- [Stack decisions and direct dependencies](docs/tech-stack.md)
+- [Poker rules, state, persistence, and validation](docs/poker-engine.md)
+- [Selected UI direction](docs/ui-direction.md)
+
+The throwaway comparison prototypes remain on [`prototype/ui-variants`](https://github.com/okhay-p/playkit/tree/prototype/ui-variants).
+
+Game state and history stay in IndexedDB on this browser/device. No telemetry or third-party font requests are included. Ending the table deletes its local game record; changing origin or browser profile opens separate storage.

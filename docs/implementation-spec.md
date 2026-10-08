@@ -1,6 +1,6 @@
 # Playkit implementation spec
 
-Status: ready for implementation. No application has been implemented yet.
+Status: shared-device poker is implemented and validated in desktop/phone Chromium, including offline recovery. Real-device usability and Safari/iOS remain release checks. WebRTC synchronization and chess are not yet implemented.
 
 Selected UI direction: **A — Table Club**, chosen from the interactive prototypes. See [the UI decision](ui-direction.md) for the visual direction and primary source references.
 
