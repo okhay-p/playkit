@@ -1,6 +1,6 @@
 # Word deduction games: research and proposed direction
 
-Researched 2026-10-09. This note records findings and recommendations, not an approved implementation spec.
+Researched 2026-10-09. This note preserves the original findings and recommendations. The implemented PlayKit presets are documented in [game tools](game-tools.md): both use repeated elimination cycles, and Imposter includes a final spoken guess. Word categories, custom packs, and private voting remain future work.
 
 ## Published rules
 
