@@ -31,6 +31,30 @@ test("scorekeeper records, corrects, undoes, and recovers offline", async ({
   await page.reload();
   await expect(page.getByText("Leading: Alex", { exact: true })).toBeVisible();
   await context.setOffline(false);
+  await page.evaluate(() => {
+    const original = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (
+      this: IDBObjectStore,
+      ...args: Parameters<typeof original>
+    ) {
+      if (this.transaction.db.name === "playkit-tools")
+        throw new DOMException(
+          "Simulated storage failure",
+          "QuotaExceededError",
+        );
+      return Reflect.apply(original, this, args);
+    };
+  });
+  await page.getByLabel("Alex score", { exact: true }).fill("7");
+  await page
+    .getByRole("button", { name: "Record scores", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByText("Leading: Alex", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Alex score", { exact: true })).toHaveValue("7");
+  await expect(
+    page.getByRole("button", { name: "Edit Round 2", exact: true }),
+  ).toHaveCount(0);
 });
 test("knockout handles a bye, advances winners, protects played later rounds, and resets explicitly", async ({
   page,

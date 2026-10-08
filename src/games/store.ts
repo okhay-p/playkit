@@ -145,6 +145,7 @@ export function changeTool(
 }
 export function undoTool(kind: Kind) {
   return enqueue(kind, async () => {
+    let saved: { game: Game; history: Game[] } | undefined;
     await db.transaction("rw", db.games, async () => {
       const row = await db.games.get(kind);
       if (!row?.history.length) return;
@@ -153,8 +154,9 @@ export function undoTool(kind: Kind) {
       const game = { ...row.history.at(-1)!, revision: row.game.revision + 1 },
         history = row.history.slice(0, -1);
       await db.games.put({ ...row, game, history });
-      publish(kind, { game, history });
+      saved = { game, history };
     });
+    if (saved) publish(kind, saved);
   });
 }
 export function clearTool(kind: Kind) {
