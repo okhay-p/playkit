@@ -4,7 +4,7 @@ Tools for real-world play: a webapp that helps people play physical games togeth
 
 The first implementation milestone provides **shared-device no-limit Texas Hold’em**: setup for 2–10 seats, betting and turn enforcement, explicit physical dealing, showdown entry and mucking, side-pot payout previews, settlement, undo/history, rebuys, cashouts, and local recovery. Its interface follows [A — Table Club](docs/ui-direction.md).
 
-Optional **phone synchronization** now adds native WebRTC, host-approved seats, shared table/history, restricted player controls, idempotent actions, and recovery after host/client reload. The Cloudflare signaling Worker and TURN credential endpoint run locally; live services are not provisioned or deployed. See [phone-sync setup](docs/phone-sync.md). The chess clock and future Clerk accounts remain later milestones. Shared-device poker needs no backend or account.
+Optional **phone synchronization** now adds native WebRTC, host-approved seats, shared table/history, restricted player controls, idempotent actions, and recovery after host/client reload. The Cloudflare signaling Worker and TURN credential endpoint run locally; live services are not provisioned or deployed. See [phone-sync setup](docs/phone-sync.md). The **shared chess clock** supports separate starting times, Fischer increments, pause/reset, time expiration, and paused recovery. Future Clerk accounts remain a later milestone. Shared-device games need no backend or account.
 
 ## Run locally
 
@@ -24,7 +24,7 @@ npm run build
 npm run preview
 ```
 
-The production preview uses `http://localhost:4173`. After the first successful load and the “Offline ready” indicator, cached single-device play continues without internet, including a reload and explicit resume. Fonts are bundled locally. App updates are prompted and only accepted between hands.
+The production preview uses `http://localhost:4173`. After the first successful load and the “Offline ready” indicator, cached single-device play continues without internet, including a reload and explicit resume. Fonts are bundled locally. App updates are prompted and only accepted between hands and while the chess clock is paused.
 
 The static `dist/` output can be hosted over HTTPS. Configure any host to serve `index.html` for app navigation routes. No deployment or Cloudflare account setup has been performed yet.
 
@@ -40,6 +40,8 @@ The browser suite starts and stops its own production preview and local signalin
 
 ## Implementation references
 
+- [Deployment note: Cloudflare Pages, signaling, secrets, costs, and release checks](docs/deployment.md)
+- [Chess clock behavior and recovery](docs/chess-clock.md)
 - [Implementation spec and milestones](docs/implementation-spec.md)
 - [Stack decisions and direct dependencies](docs/tech-stack.md)
 - [Poker rules, state, persistence, and validation](docs/poker-engine.md)

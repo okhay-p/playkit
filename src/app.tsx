@@ -14,6 +14,7 @@ import { Modal, primary, secondary, Tag } from "./ui/primitives";
 import { useWakeLock } from "./ui/use-wake-lock";
 import { initializeSync, useSync } from "./sync/controller";
 import { useSession } from "./ui/use-session";
+import { useClock } from "./chess/store";
 
 let requestUpdate: ((reload?: boolean) => Promise<void>) | undefined;
 let updateReady = false;
@@ -23,6 +24,16 @@ function notifySW() {
   swListeners.forEach((fn) => fn());
 }
 requestUpdate = registerSW({
+  onRegisteredSW(_url, registration) {
+    // The initial install callback does not fire on later page loads.
+    if (registration) {
+      // Registration may finish before activation or control, especially after navigation.
+      void navigator.serviceWorker.ready.then(() => {
+        offlineReady = true;
+        notifySW();
+      });
+    }
+  },
   onNeedRefresh() {
     updateReady = true;
     notifySW();
@@ -34,6 +45,7 @@ requestUpdate = registerSW({
 });
 function Root() {
   const state = useSession();
+  const chess = useClock();
   const syncState = useSync();
   useWakeLock(syncState.role === "host");
   const [online, setOnline] = useState(navigator.onLine);
@@ -58,7 +70,9 @@ function Root() {
     };
   }, []);
   const safeUpdate =
-    !state.current || ["between", "settled"].includes(state.current.core.phase);
+    chess.clock?.phase !== "running" &&
+    (!state.current ||
+      ["between", "settled"].includes(state.current.core.phase));
   return (
     <>
       <header className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
@@ -121,10 +135,10 @@ function Root() {
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-slate-500 sm:px-8">
         <span>Tools for real-world play. Keep the cards on the table.</span>
         <span role="status">
-          {state.busy
+          {state.busy || chess.busy
             ? "Saving…"
-            : state.current
-              ? syncState.role === "guest"
+            : state.current || chess.clock
+              ? syncState.role === "guest" && state.current
                 ? "Last table update saved on this phone"
                 : "Saved on this device"
               : "No account needed"}
@@ -136,12 +150,12 @@ function Root() {
           <p className="text-sm">
             An update is ready.{" "}
             {safeUpdate
-              ? "Your saved table will stay here."
-              : "Finish this hand to update."}
+              ? "Your saved games will stay here."
+              : "Finish any active hand and pause the clock to update."}
           </p>
           <button
             className={primary}
-            disabled={!safeUpdate || state.busy}
+            disabled={!safeUpdate || state.busy || chess.busy}
             onClick={() => void requestUpdate?.(true)}
           >
             Update
@@ -220,7 +234,7 @@ function Home() {
           <div className="mb-5 text-5xl" aria-hidden="true">
             ♞
           </div>
-          <Tag>Coming next</Tag>
+          <Tag>Shared chess clock</Tag>
           <h2 className="mt-3 font-display text-3xl font-extrabold">
             Every second counts.
           </h2>
@@ -228,9 +242,9 @@ function Home() {
             A shared chess clock with increments, pause, and quick time
             controls.
           </p>
-          <p className="mt-6 text-sm text-slate-500">
-            Chess clocks are planned for a later milestone.
-          </p>
+          <Link to="/chess" className={`${primary} mt-6 inline-block`}>
+            Open chess clock →
+          </Link>
         </section>
       </div>
     </div>
@@ -268,12 +282,18 @@ const joinRoute = createRoute({
   path: "/join",
   component: lazyRouteComponent(() => import("./ui/join"), "Join"),
 });
+const chessRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/chess",
+  component: lazyRouteComponent(() => import("./ui/chess"), "Chess"),
+});
 const router = createRouter({
   routeTree: rootRoute.addChildren([
     homeRoute,
     setupRoute,
     tableRoute,
     joinRoute,
+    chessRoute,
   ]),
 });
 declare module "@tanstack/react-router" {

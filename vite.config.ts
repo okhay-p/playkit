@@ -13,7 +13,8 @@ export default defineConfig({
       manifest: {
         name: "PlayKit — Tools for real-world play",
         short_name: "PlayKit",
-        description: "A shared-device helper for physical poker games.",
+        description:
+          "Shared-device poker tools and a chess clock for real-world play.",
         theme_color: "#3b82f6",
         background_color: "#fafbf9",
         display: "standalone",

@@ -1,6 +1,6 @@
 # Playkit implementation spec
 
-Status: shared-device poker is implemented with Chromium, Firefox, and WebKit coverage, including offline recovery. Phone synchronization is implemented with a local Cloudflare signaling Worker and native WebRTC; see [setup and remaining release gates](phone-sync.md). Live service deployment, TURN relay/mixed-network testing, real-device usability, and Safari/iOS remain release checks. Chess is not yet implemented.
+Status: shared-device poker is implemented with Chromium, Firefox, and WebKit coverage, including offline recovery. Phone synchronization is implemented with a local Cloudflare signaling Worker and native WebRTC; see [setup and remaining release gates](phone-sync.md). Live service deployment, TURN relay/mixed-network testing, real-device usability, and Safari/iOS remain release checks. The shared-device chess clock is implemented with increments, pause/reset, monotonic timing, offline use, and paused recovery; see [clock behavior](chess-clock.md) and the [deployment note](deployment.md). Physical shared-device touch, backgrounding, and wake-lock checks remain release validation.
 
 Selected UI direction: **A — Table Club**, chosen from the interactive prototypes. See [the UI decision](ui-direction.md) for the visual direction and primary source references.
 
