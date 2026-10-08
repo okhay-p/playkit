@@ -6,7 +6,7 @@ export default defineConfig({
   timeout: 120_000,
   expect: { timeout: 8_000 },
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: process.env.PLAYKIT_LIVE_E2E || "http://127.0.0.1:4173",
     actionTimeout: 15_000,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -18,20 +18,22 @@ export default defineConfig({
     // Avoid contention between headless WebKit software renderers.
     { name: "webkit", workers: 1, use: { ...devices["Desktop Safari"] } },
   ],
-  webServer: [
-    {
-      command:
-        "VITE_SIGNALING_URL=http://127.0.0.1:8787 npm run build && npm run preview -- --port 4173 --strictPort",
-      url: "http://127.0.0.1:4173",
-      reuseExistingServer: false,
-      timeout: 120_000,
-    },
-    {
-      command:
-        "rm -rf .wrangler/e2e && npm run dev:signaling -- --persist-to .wrangler/e2e",
-      url: "http://127.0.0.1:8787",
-      reuseExistingServer: false,
-      timeout: 120_000,
-    },
-  ],
+  webServer: process.env.PLAYKIT_LIVE_E2E
+    ? undefined
+    : [
+        {
+          command:
+            "VITE_SIGNALING_URL=http://127.0.0.1:8787 npm run build && npm run preview -- --port 4173 --strictPort",
+          url: "http://127.0.0.1:4173",
+          reuseExistingServer: false,
+          timeout: 120_000,
+        },
+        {
+          command:
+            "rm -rf .wrangler/e2e && npm run dev:signaling -- --persist-to .wrangler/e2e",
+          url: "http://127.0.0.1:8787",
+          reuseExistingServer: false,
+          timeout: 120_000,
+        },
+      ],
 });

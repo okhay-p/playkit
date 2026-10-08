@@ -42,6 +42,7 @@ type Peer = {
   suspended: boolean;
   messages: number;
   window: number;
+  negotiationTimer?: ReturnType<typeof setTimeout>;
 };
 type Options = {
   endpoint: string;
@@ -224,6 +225,15 @@ export class PeerTransport {
       messages: 0,
       window: Date.now(),
     };
+    peer.negotiationTimer = setTimeout(() => {
+      if (peer.channel?.readyState !== "open" && !peer.closed) {
+        this.drop(id);
+        this.options.status(
+          false,
+          "Phones could not connect directly. Try the same Wi-Fi, reconnect, or use the shared device.",
+        );
+      }
+    }, 30_000);
     this.peers.set(id, peer);
     pc.onicecandidate = (event) => {
       if (event.candidate)
@@ -302,7 +312,10 @@ export class PeerTransport {
   }
   private bind(id: string, peer: Peer, channel: RTCDataChannel) {
     peer.channel = channel;
-    channel.onopen = () => this.options.open(id);
+    channel.onopen = () => {
+      clearTimeout(peer.negotiationTimer);
+      this.options.open(id);
+    };
     channel.onclose = () => {
       if (!peer.closed) this.options.close(id);
     };
@@ -391,6 +404,7 @@ export class PeerTransport {
     if (!peer) return;
     this.peers.delete(id);
     peer.closed = true;
+    clearTimeout(peer.negotiationTimer);
     peer.channel?.close();
     peer.pc.close();
     this.options.close(id);

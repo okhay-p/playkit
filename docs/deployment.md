@@ -1,6 +1,6 @@
 # Deployment note
 
-The intended production origin is **https://playkit.oakkarphyo.com**. The shared-device frontend is deployed at **https://playkit-677.pages.dev**. Its custom domain has a proxied CNAME configured, and HTTPS checks succeed. Shared poker and the shared chess clock can launch as a static HTTPS site without a backend or accounts. Optional poker phone joining additionally needs the signaling Worker, SQLite Durable Objects, and Cloudflare TURN. Clerk accounts are still a future feature; no auth setup or SDK is required now.
+The intended production origin is **https://playkit.oakkarphyo.com**. The shared-device frontend is deployed at **https://playkit-677.pages.dev**. Its custom domain has a proxied CNAME configured, and HTTPS checks succeed. Shared poker and the shared chess clock can launch as a static HTTPS site without a backend or accounts. Optional poker phone joining uses the signaling Worker, SQLite Durable Objects, and free Cloudflare STUN. Direct connections may fail on restrictive networks; metered TURN remains disabled. Clerk accounts are still a future feature; no auth setup or SDK is required now.
 
 ## Current deployment
 
@@ -9,7 +9,7 @@ The intended production origin is **https://playkit.oakkarphyo.com**. The shared
 - Build: `npm run build`, output `dist`, Node version `22`.
 - First production deployment succeeded on 2026-10-08 UTC. The HTTPS homepage and `/chess` return successfully; the browser loads the toolkit and shows **Offline ready**.
 - Custom domain: `playkit.oakkarphyo.com` has the proxied CNAME `playkit` → `playkit-677.pages.dev`. Public DNS resolves and HTTPS checks return 200 for `/`, `/poker`, `/chess`, and `/join`. Pages reports the domain, DNS verification, and HTTPS validation all active. A local resolver may temporarily cache the earlier missing record.
-- Signaling URL is not configured in the production build. Poker phone joining remains unavailable until signaling and TURN are provisioned and validated. Shared poker and chess work independently.
+- Production signaling: `https://playkit-signaling-production.oakkarphyo7.workers.dev`, configured as the Pages production `VITE_SIGNALING_URL`. SQLite Durable Objects and `ICE_MODE=stun` are deployed. No TURN relay is enabled.
 - No paid plan upgrade or TURN enrollment has been performed.
 
 Cloudflare's official agent setup installed its skills globally under `~/.agents/skills/` and registered the `cloudflare` MCP server in `~/.codex/config.toml`. Wrangler OAuth is authenticated. MCP OAuth is authenticated with Pages read/write, DNS read/write, and zone read access; its tools were used to create the subdomain CNAME. Those user-level credentials/configuration are outside the Git repository.
@@ -72,7 +72,7 @@ These are the [Cloudflare Pages custom-domain steps](https://developers.cloudfla
 
 ## 4. Enable optional poker phone joining
 
-Do this only when you are ready to configure and validate TURN. Use `https://playkit.oakkarphyo.com` as the frontend origin, then:
+The current free-only deployment uses STUN and direct WebRTC. The TURN steps below are an optional future relay upgrade; do not perform them under the free-only constraint. Use `https://playkit.oakkarphyo.com` as the frontend origin, then:
 
 1. In `wrangler.jsonc`, verify `env.production.vars.ALLOWED_ORIGINS` is `https://playkit.oakkarphyo.com`, as configured in the repository. Additional stable custom origins can be comma-separated. Do not allow arbitrary preview origins or use a wildcard. Keep `ALLOW_LOCAL_ICE` set to `false`.
 2. Log in with `npx wrangler login`. Keep the Workers Free plan and use the configured SQLite Durable Object migration. No database containing game state is needed on Cloudflare.
@@ -89,7 +89,7 @@ If Wrangler requires the Worker to exist before adding secrets, deploy it first;
 4. Copy the **production** Worker HTTPS URL printed by Wrangler. Add it as the Pages production build variable `VITE_SIGNALING_URL`, then rebuild/deploy the frontend. This variable is public and compiled into the bundle. Changing it requires a new build.
 5. Leave `VITE_ICE_TRANSPORT_POLICY` unset for normal direct connections with TURN fallback. For a dedicated relay acceptance build, set it to `relay`, rebuild, verify relay connectivity, then remove it and rebuild for normal release.
 
-The production Worker refuses unconfigured origins and fails TURN issuance when credentials are missing. A successful static deployment does not mean joining is ready. See [phone-sync configuration and recovery](phone-sync.md) for protocol, expiration, and limits.
+The production Worker refuses unconfigured origins. In STUN mode it returns only the free public STUN server; TURN mode fails issuance when credentials are missing. A successful static deployment does not mean joining is ready. See [phone-sync configuration and recovery](phone-sync.md) for protocol, expiration, and limits.
 
 ## Free tier and costs
 

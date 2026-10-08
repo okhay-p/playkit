@@ -1,6 +1,6 @@
 # Poker phone synchronization
 
-Implementation uses native WebRTC reliable ordered data channels, an authoritative browser host, and a Cloudflare Worker with SQLite-backed Durable Objects for signaling. Local browser integration checks run against the actual Worker runtime. Live infrastructure has not been provisioned or deployed; real-device, mixed-network, TURN relay, and ten-phone validation remain release gates.
+Implementation uses native WebRTC reliable ordered data channels, an authoritative browser host, and a Cloudflare Worker with SQLite-backed Durable Objects for signaling. Local browser integration checks run against the actual Worker runtime. The production signaling Worker is deployed at `https://playkit-signaling-production.oakkarphyo7.workers.dev`, using SQLite Durable Objects and free Cloudflare STUN. No TURN credentials or paid service are enabled. Direct WebRTC may fail on restrictive NAT/firewall networks; use the same Wi-Fi or shared-device play. Physical-device mixed-network verification remains necessary; automated browser contexts are not physical phones.
 
 ## Local setup
 
@@ -17,14 +17,14 @@ For Tailscale, set `VITE_SIGNALING_URL=http://<host-tailscale-ip>:8787`, add the
 
 ## Cloudflare configuration and deployment
 
-Use Workers Free and SQLite Durable Objects. Do not upgrade to a paid plan. Production configuration allows `https://playkit.oakkarphyo.com` and refuses joining without TURN credentials.
+Use Workers Free and SQLite Durable Objects. Do not upgrade to a paid plan. Production configuration allows `https://playkit.oakkarphyo.com` and explicitly selects `ICE_MODE=stun`. Local tests use empty ICE; optional `ICE_MODE=turn` fails closed without TURN credentials.
 
 1. Log in with `npx wrangler login` in your own terminal and select your Cloudflare account.
 2. Verify `env.production.vars.ALLOWED_ORIGINS` in `wrangler.jsonc` matches the production frontend: `https://playkit.oakkarphyo.com`. Additional stable origins can be separated by commas without spaces. Leave `ALLOW_LOCAL_ICE` set to `false`.
-3. Create a TURN key in Cloudflare Realtime. Set the key ID and its privileged API token as Worker secrets using `npx wrangler secret put TURN_KEY_ID --env production` and `npx wrangler secret put TURN_API_TOKEN --env production`. Do not put them in `VITE_*` variables, source files, or the static frontend.
+3. For the free-only deployment, keep `ICE_MODE=stun` and skip TURN. A future optional relay deployment would require a TURN key in Cloudflare Realtime. Set the key ID and its privileged API token as Worker secrets using `npx wrangler secret put TURN_KEY_ID --env production` and `npx wrangler secret put TURN_API_TOKEN --env production`. Do not put them in `VITE_*` variables, source files, or the static frontend.
 4. Run `npm run deploy:signaling`. The production environment has its own SQLite Durable Object binding/migration. Set `VITE_SIGNALING_URL=https://<production-worker-url>` when building the static frontend.
 5. Host `dist/` over HTTPS with SPA fallback to `index.html`, including `/join`. No authentication or account is required to play locally. Clerk integration remains a future milestone.
-6. Test a host plus two physical phones across Wi-Fi/mobile data, then ten approved seats. Repeat with `VITE_ICE_TRANSPORT_POLICY=relay` to force TURN and verify that connection statistics report relay candidates. Exercise sleep, backgrounding, host reload, rejoin, and expiration before releasing phone joining.
+6. Test a host plus two physical phones across Wi-Fi/mobile data, then ten approved seats. Relay-only testing applies only if TURN is separately authorized and configured; it cannot pass in the current STUN-only deployment. Exercise sleep, backgrounding, host reload, rejoin, and expiration before releasing phone joining.
 
 Local Worker state is ignored under `.wrangler/`. E2E tests reset only their isolated `.wrangler/e2e` directory at startup. They do not contact Cloudflare or issue billable TURN credentials.
 

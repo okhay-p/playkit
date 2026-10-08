@@ -37,6 +37,10 @@ export function Phones({ close }: { close: () => void }) {
           {error || sync.error}
         </p>
       ) : null}
+      <p className="mb-4 text-sm text-slate-500">
+        Phones connect directly. If your network blocks the connection, try the
+        same Wi-Fi or keep playing on this shared device.
+      </p>
       {!sync.host ? (
         <>
           <p className="mb-4 text-slate-500">
