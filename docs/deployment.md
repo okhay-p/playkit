@@ -8,7 +8,7 @@ The intended production origin is **https://playkit.oakkarphyo.com**. The shared
 - Production branch: `main`; automatic production builds are enabled. Preview builds are disabled initially.
 - Build: `npm run build`, output `dist`, Node version `22`.
 - First production deployment succeeded on 2026-10-08 UTC. The HTTPS homepage and `/chess` return successfully; the browser loads the toolkit and shows **Offline ready**.
-- Custom domain: `playkit.oakkarphyo.com` has the proxied CNAME `playkit` → `playkit-677.pages.dev`. Public DNS resolves and HTTPS checks return 200 for `/`, `/poker`, `/chess`, and `/join`. Pages reports DNS verification active; its overall validation status was still pending at the last check. A local resolver may temporarily cache the earlier missing record.
+- Custom domain: `playkit.oakkarphyo.com` has the proxied CNAME `playkit` → `playkit-677.pages.dev`. Public DNS resolves and HTTPS checks return 200 for `/`, `/poker`, `/chess`, and `/join`. Pages reports the domain, DNS verification, and HTTPS validation all active. A local resolver may temporarily cache the earlier missing record.
 - Signaling URL is not configured in the production build. Poker phone joining remains unavailable until signaling and TURN are provisioned and validated. Shared poker and chess work independently.
 - No paid plan upgrade or TURN enrollment has been performed.
 
