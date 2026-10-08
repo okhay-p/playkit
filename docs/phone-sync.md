@@ -17,10 +17,10 @@ For Tailscale, set `VITE_SIGNALING_URL=http://<host-tailscale-ip>:8787`, add the
 
 ## Cloudflare configuration and deployment
 
-Use Workers Free and SQLite Durable Objects. Do not upgrade to a paid plan. Production configuration starts with an empty origin allowlist and refuses joining without TURN credentials.
+Use Workers Free and SQLite Durable Objects. Do not upgrade to a paid plan. Production configuration allows `https://playkit.oakkarphyo.com` and refuses joining without TURN credentials.
 
 1. Log in with `npx wrangler login` in your own terminal and select your Cloudflare account.
-2. Set `env.production.vars.ALLOWED_ORIGINS` in `wrangler.jsonc` to the exact HTTPS frontend origin(s), separated by commas without spaces. Leave `ALLOW_LOCAL_ICE` set to `false`.
+2. Verify `env.production.vars.ALLOWED_ORIGINS` in `wrangler.jsonc` matches the production frontend: `https://playkit.oakkarphyo.com`. Additional stable origins can be separated by commas without spaces. Leave `ALLOW_LOCAL_ICE` set to `false`.
 3. Create a TURN key in Cloudflare Realtime. Set the key ID and its privileged API token as Worker secrets using `npx wrangler secret put TURN_KEY_ID --env production` and `npx wrangler secret put TURN_API_TOKEN --env production`. Do not put them in `VITE_*` variables, source files, or the static frontend.
 4. Run `npm run deploy:signaling`. The production environment has its own SQLite Durable Object binding/migration. Set `VITE_SIGNALING_URL=https://<production-worker-url>` when building the static frontend.
 5. Host `dist/` over HTTPS with SPA fallback to `index.html`, including `/join`. No authentication or account is required to play locally. Clerk integration remains a future milestone.
