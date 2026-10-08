@@ -30,6 +30,7 @@
       "vars": {
         "ALLOWED_ORIGINS": "https://playkit.oakkarphyo.com",
         "ALLOW_LOCAL_ICE": "false",
+        "ICE_MODE": "stun",
       },
       "durable_objects": {
         "bindings": [

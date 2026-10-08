@@ -9,8 +9,12 @@ async function action(page: Page, name: string) {
   await page.getByRole("button", { name, exact: true }).click();
   await confirm(page);
 }
-async function enable(host: Page) {
+async function enable(host: Page, seats = 4) {
   await host.goto("/poker/new");
+  for (let i = 4; i < seats; i++)
+    await host
+      .getByRole("button", { name: "+ Add a seat", exact: true })
+      .click();
   await host.getByRole("button", { name: "Create table", exact: true }).click();
   await host.getByRole("button", { name: "Phones", exact: true }).click();
   await host
@@ -272,7 +276,9 @@ test("phones recover after client/host refresh, freeze offline, and require appr
       phone.getByRole("button", { name: "Call 10", exact: true }),
     ).toBeDisabled();
     await expect(
-      phone.getByText("Last table update saved on this phone", { exact: true }),
+      phone.getByText(
+        /^Last table update saved on this phone(?: · Offline ready)?$/,
+      ),
     ).toBeVisible();
     await expect(phone.getByRole("alert")).toHaveCount(0);
     await host
@@ -329,5 +335,57 @@ test("phones recover after client/host refresh, freeze offline, and require appr
     ).toBeVisible();
   } finally {
     await context.close();
+  }
+});
+
+test("ten approved phone seats receive the same authoritative hand", async ({
+  page: host,
+  browser,
+}, info) => {
+  test.skip(
+    info.project.name !== "desktop",
+    "Ten native connections are checked once, not once per viewport.",
+  );
+  test.setTimeout(240_000);
+  const link = await enable(host, 10);
+  const phones: Awaited<ReturnType<typeof join>>[] = [];
+  try {
+    const names = [
+      "Alex",
+      "Jordan",
+      "Taylor",
+      "Casey",
+      ...Array.from({ length: 6 }, (_, i) => `Player ${i + 5}`),
+    ];
+    for (const name of names)
+      phones.push(await join(browser, link, `${name} phone`, name, host));
+    await expect(host.getByText("Connected", { exact: true })).toHaveCount(10);
+    await host
+      .getByRole("button", { name: "Close dialog", exact: true })
+      .click();
+    await host.getByRole("button", { name: "Start hand", exact: true }).click();
+    await confirm(host);
+    for (const { page } of phones)
+      await expect(
+        page.getByRole("heading", { name: "Casey’s turn" }),
+      ).toBeVisible();
+    await action(phones[3].page, "Call 10");
+    for (const { page } of phones)
+      await expect(
+        page.getByRole("heading", { name: "Player 5’s turn" }),
+      ).toBeVisible();
+    await host.getByRole("button", { name: "Phones", exact: true }).click();
+    await host
+      .getByRole("button", { name: "Close phone joining", exact: true })
+      .click();
+    await host
+      .getByRole("button", { name: "Confirm close joining", exact: true })
+      .click();
+    for (const { page } of phones)
+      await expect(
+        page.getByRole("heading", { name: "Take a seat.", exact: true }),
+      ).toBeVisible();
+  } finally {
+    for (const { context } of phones) await context.close();
   }
 });

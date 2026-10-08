@@ -4,6 +4,7 @@ interface Env {
   ROOMS: DurableObjectNamespace;
   ALLOWED_ORIGINS: string;
   ALLOW_LOCAL_ICE?: string;
+  ICE_MODE?: "stun" | "turn";
   TURN_KEY_ID?: string;
   TURN_API_TOKEN?: string;
 }
@@ -167,6 +168,11 @@ export class Room {
       if (!this.env.TURN_KEY_ID || !this.env.TURN_API_TOKEN) {
         if (this.env.ALLOW_LOCAL_ICE === "true")
           return json({ iceServers: [] });
+        if (this.env.ICE_MODE === "stun")
+          return json({
+            iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }],
+            mode: "stun",
+          });
         return json(
           { error: "Phone joining is unavailable until TURN is configured." },
           503,

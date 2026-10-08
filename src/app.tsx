@@ -246,6 +246,38 @@ function Home() {
             Open chess clock →
           </Link>
         </section>
+        {[
+          ["Scorekeeper", "Keep player and team scores, round by round.", "▤"],
+          [
+            "Tournament manager",
+            "Organize matches and see who plays next.",
+            "⚑",
+          ],
+          [
+            "Undercover",
+            "Similar words. Hidden sides. Find who doesn’t belong.",
+            "◈",
+          ],
+          [
+            "Imposter",
+            "One secret word. Someone has to bluff without it.",
+            "?",
+          ],
+        ].map(([name, description, icon]) => (
+          <section
+            key={name}
+            className="rounded-3xl border border-slate-200 bg-white p-7"
+          >
+            <div className="mb-5 text-5xl" aria-hidden="true">
+              {icon}
+            </div>
+            <Tag>Coming soon</Tag>
+            <h2 className="mt-3 font-display text-3xl font-extrabold">
+              {name}
+            </h2>
+            <p className="mt-3 text-slate-500">{description}</p>
+          </section>
+        ))}
       </div>
     </div>
   );
