@@ -77,7 +77,7 @@ The poker host saves accepted commands before publishing updates. Joined phones 
 
 ## Deployment
 
-The shared-device app is live at **https://playkit-677.pages.dev** on Cloudflare Pages. The custom domain **`https://playkit.oakkarphyo.com`** is registered with Pages and awaiting DNS validation. Pushes to `main` build and deploy automatically. Optional poker joining adds a separate Cloudflare Worker with SQLite Durable Objects and TURN credentials.
+The shared-device app is hosted at **https://playkit.oakkarphyo.com** on Cloudflare Pages, with **https://playkit-677.pages.dev** as its Pages address. Pushes to `main` build and deploy automatically. Optional poker joining adds a separate Cloudflare Worker with SQLite Durable Objects and TURN credentials.
 
 Follow the [deployment guide](docs/deployment.md) for Pages builds, the custom subdomain, origin configuration, secrets, free-tier costs, release checks, and rollback. Shared-device play can be deployed first without provisioning the signaling backend.
 

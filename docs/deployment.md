@@ -1,6 +1,6 @@
 # Deployment note
 
-The intended production origin is **https://playkit.oakkarphyo.com**. The shared-device frontend is deployed at **https://playkit-677.pages.dev**. Its custom domain is registered with Pages and awaiting DNS validation. Shared poker and the shared chess clock can launch as a static HTTPS site without a backend or accounts. Optional poker phone joining additionally needs the signaling Worker, SQLite Durable Objects, and Cloudflare TURN. Clerk accounts are still a future feature; no auth setup or SDK is required now.
+The intended production origin is **https://playkit.oakkarphyo.com**. The shared-device frontend is deployed at **https://playkit-677.pages.dev**. Its custom domain has a proxied CNAME configured, and HTTPS checks succeed. Shared poker and the shared chess clock can launch as a static HTTPS site without a backend or accounts. Optional poker phone joining additionally needs the signaling Worker, SQLite Durable Objects, and Cloudflare TURN. Clerk accounts are still a future feature; no auth setup or SDK is required now.
 
 ## Current deployment
 
@@ -8,11 +8,11 @@ The intended production origin is **https://playkit.oakkarphyo.com**. The shared
 - Production branch: `main`; automatic production builds are enabled. Preview builds are disabled initially.
 - Build: `npm run build`, output `dist`, Node version `22`.
 - First production deployment succeeded on 2026-10-08 UTC. The HTTPS homepage and `/chess` return successfully; the browser loads the toolkit and shows **Offline ready**.
-- Custom domain: `playkit.oakkarphyo.com` is registered, with DNS validation pending. The required CNAME target is `playkit-677.pages.dev`.
+- Custom domain: `playkit.oakkarphyo.com` has the proxied CNAME `playkit` → `playkit-677.pages.dev`. Public DNS resolves and HTTPS checks return 200 for `/`, `/poker`, `/chess`, and `/join`. Pages reports DNS verification active; its overall validation status was still pending at the last check. A local resolver may temporarily cache the earlier missing record.
 - Signaling URL is not configured in the production build. Poker phone joining remains unavailable until signaling and TURN are provisioned and validated. Shared poker and chess work independently.
 - No paid plan upgrade or TURN enrollment has been performed.
 
-Cloudflare's official agent setup installed its skills globally under `~/.agents/skills/` and registered the `cloudflare` MCP server in `~/.codex/config.toml`. Wrangler OAuth is authenticated. MCP OAuth is a separate login and requires browser authorization; restart the agent after authorization to load its tools. Those user-level credentials/configuration are outside the Git repository.
+Cloudflare's official agent setup installed its skills globally under `~/.agents/skills/` and registered the `cloudflare` MCP server in `~/.codex/config.toml`. Wrangler OAuth is authenticated. MCP OAuth is authenticated with Pages read/write, DNS read/write, and zone read access; its tools were used to create the subdomain CNAME. Those user-level credentials/configuration are outside the Git repository.
 
 ## 1. Prepare a release
 
@@ -68,7 +68,7 @@ Use the actual Pages hostname; do not include `https://` or a path in the DNS ta
 3. Wait for the custom domain and HTTPS certificate to become active. Check `https://playkit.oakkarphyo.com`, including direct reloads of `/poker`, `/chess`, and `/join`. Configure any optional Pages-to-custom-domain redirect after activation.
 4. Use the custom domain consistently for play and invitation links. The app creates invitations from the current origin; games made on `pages.dev` do not migrate to the custom domain.
 
-These are the [Cloudflare Pages custom-domain steps](https://developers.cloudflare.com/pages/configuration/custom-domains/). The project and Pages domain registration already exist; DNS validation is still pending. Do not create a second project to finish the domain setup.
+These are the [Cloudflare Pages custom-domain steps](https://developers.cloudflare.com/pages/configuration/custom-domains/). The project and Pages domain registration already exist; the CNAME is configured and HTTPS checks succeed. Do not create a second project to finish the domain setup.
 
 ## 4. Enable optional poker phone joining
 
