@@ -9,3 +9,6 @@ coverage/
 *.tsbuildinfo
 test-results/
 playwright-report/
+
+.wrangler/
+.dev.vars

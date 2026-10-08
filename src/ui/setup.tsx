@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { newSession } from "../storage/session";
+import { useSync } from "../sync/controller";
 import { useSession } from "./use-session";
 import { field, primary, secondary, Tag } from "./primitives";
 
 export function Setup() {
   const navigate = useNavigate();
   const { current, busy } = useSession();
+  const sync = useSync();
   const [name, setName] = useState("Friday night poker");
   const [small, setSmall] = useState(5);
   const [big, setBig] = useState(10);
@@ -32,6 +34,17 @@ export function Setup() {
       /* Store exposes save failure. */
     }
   }
+  if (sync.role === "guest" && !current)
+    return (
+      <section className="rounded-3xl bg-white p-8">
+        <h1 className="font-display text-3xl font-extrabold">
+          Finish joining your table.
+        </h1>
+        <Link to="/join" className={`${primary} mt-4 inline-block`}>
+          Open joining
+        </Link>
+      </section>
+    );
   if (current)
     return (
       <section className="rounded-3xl bg-white p-8">

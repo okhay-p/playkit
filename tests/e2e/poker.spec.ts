@@ -247,9 +247,14 @@ test("stale actions in another tab cannot overwrite a saved turn", async ({
     .getByRole("dialog")
     .getByRole("button", { name: "Confirm", exact: true })
     .click();
-  await expect(other.getByRole("alert")).toContainText(
-    "changed in another tab",
-  );
+  await expect(
+    other.getByRole("alert").filter({ hasText: "changed in another tab" }),
+  ).toBeVisible();
+  await expect(
+    other
+      .getByRole("dialog")
+      .getByRole("button", { name: "Confirm", exact: true }),
+  ).toBeDisabled();
   const snapshot = await saved(other);
   expect(snapshot.revision).toBe(2);
   expect(snapshot.core.actor).toBe(snapshot.core.players[0].id);

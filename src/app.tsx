@@ -11,6 +11,8 @@ import {
 import { registerSW } from "virtual:pwa-register";
 import { clearSession, loadSession, resumeSession } from "./storage/session";
 import { Modal, primary, secondary, Tag } from "./ui/primitives";
+import { useWakeLock } from "./ui/use-wake-lock";
+import { initializeSync, useSync } from "./sync/controller";
 import { useSession } from "./ui/use-session";
 
 let requestUpdate: ((reload?: boolean) => Promise<void>) | undefined;
@@ -32,6 +34,8 @@ requestUpdate = registerSW({
 });
 function Root() {
   const state = useSession();
+  const syncState = useSync();
+  useWakeLock(syncState.role === "host");
   const [online, setOnline] = useState(navigator.onLine);
   const [clear, setClear] = useState(false);
   const sw = useSyncExternalStore(
@@ -44,7 +48,7 @@ function Root() {
     () => `${updateReady}:${offlineReady}`,
   );
   useEffect(() => {
-    void loadSession();
+    void loadSession().then(initializeSync);
     const sync = () => setOnline(navigator.onLine);
     window.addEventListener("online", sync);
     window.addEventListener("offline", sync);
@@ -69,7 +73,13 @@ function Root() {
           </span>
         </Link>
         <div className="flex items-center gap-3">
-          <Tag>Shared device</Tag>
+          <Tag>
+            {syncState.role === "guest"
+              ? "Joined phone"
+              : syncState.role === "host"
+                ? "Host device"
+                : "Shared device"}
+          </Tag>
           <span className="hidden text-sm text-slate-500 sm:block">
             {online ? "Together at the table" : "Offline · keep playing"}
           </span>
@@ -110,7 +120,9 @@ function Root() {
           {state.busy
             ? "Saving…"
             : state.current
-              ? "Saved on this device"
+              ? syncState.role === "guest"
+                ? "Last table update saved on this phone"
+                : "Saved on this device"
               : "No account needed"}
           {sw.endsWith(":true") ? " · Offline ready" : ""}
         </span>
@@ -182,7 +194,7 @@ function Home() {
           </h2>
           <p className="mb-6 mt-3 max-w-sm text-slate-500">
             Track bets, settle side pots, and keep your cash game moving. One
-            device for the whole table.
+            device for the whole table, with optional joined phones.
           </p>
           {current ? (
             <Link
@@ -213,7 +225,7 @@ function Home() {
             controls.
           </p>
           <p className="mt-6 text-sm text-slate-500">
-            Chess clocks and synced phones are planned for later milestones.
+            Chess clocks are planned for a later milestone.
           </p>
         </section>
       </div>
@@ -247,8 +259,18 @@ const tableRoute = createRoute({
   path: "/poker",
   component: lazyRouteComponent(() => import("./ui/poker"), "Table"),
 });
+const joinRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/join",
+  component: lazyRouteComponent(() => import("./ui/join"), "Join"),
+});
 const router = createRouter({
-  routeTree: rootRoute.addChildren([homeRoute, setupRoute, tableRoute]),
+  routeTree: rootRoute.addChildren([
+    homeRoute,
+    setupRoute,
+    tableRoute,
+    joinRoute,
+  ]),
 });
 declare module "@tanstack/react-router" {
   interface Register {
