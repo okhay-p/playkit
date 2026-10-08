@@ -164,7 +164,7 @@ Use a documented rule reference when implementing the engine, especially for sho
 
 ## Implementation architecture
 
-- Use a TypeScript browser application with responsive UI, installable PWA assets, IndexedDB persistence, and a separate pure game engine. Final UI framework and build tooling are implementation choices.
+- Use React with Vite, Tailwind CSS, and TanStack Router for the browser application, with native WebRTC for optional phone synchronization. Retain responsive UI, installable PWA assets, IndexedDB persistence, and a separate pure game engine. See [tech stack decisions](tech-stack.md) for agreed choices and pending supporting libraries/providers.
 - Keep poker commands, validation, state transitions, pot construction, evaluation, and payout calculation independent of DOM, storage, and networking.
 - Use the same command interface from shared controls and joined phones. Route both through the host authority; UI permission checks supplement engine checks.
 - Separate transport, persistence, and UI adapters. Shared mode uses an in-process transport without networking services.
