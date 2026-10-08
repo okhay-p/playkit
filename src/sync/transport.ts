@@ -44,7 +44,7 @@ type Peer = {
   window: number;
   negotiationTimer?: ReturnType<typeof setTimeout>;
 };
-type Options = {
+type Options<W> = {
   endpoint: string;
   room: string;
   role: "host" | "guest";
@@ -52,11 +52,12 @@ type Options = {
   credential?: string;
   peer: string;
   open: (peer: string) => void;
-  message: (peer: string, message: Wire) => Promise<void> | void;
+  message: (peer: string, message: W) => Promise<void> | void;
+  parse?: (value: unknown) => W;
   close: (peer: string) => void;
   status: (connected: boolean, error?: string, expired?: boolean) => void;
 };
-export class PeerTransport {
+export class PeerTransport<W = Wire> {
   private ws?: WebSocket;
   private peers = new Map<string, Peer>();
   private timer?: ReturnType<typeof setTimeout>;
@@ -77,7 +78,7 @@ export class PeerTransport {
       this.connect();
     }
   };
-  constructor(private options: Options) {
+  constructor(private options: Options<W>) {
     window.addEventListener("offline", this.offline);
     window.addEventListener("online", this.online);
   }
@@ -344,7 +345,12 @@ export class PeerTransport {
             }
             if (++peer.messages > 120)
               throw new Error("Too many peer messages.");
-            await this.options.message(id, wireSchema.parse(JSON.parse(text)));
+            await this.options.message(
+              id,
+              this.options.parse
+                ? this.options.parse(JSON.parse(text))
+                : (wireSchema.parse(JSON.parse(text)) as W),
+            );
           }
         })
         .catch(() => {
@@ -353,7 +359,7 @@ export class PeerTransport {
         });
     };
   }
-  send(id: string, message: Wire) {
+  send(id: string, message: W) {
     const peer = this.peers.get(id);
     if (!peer?.channel || peer.channel.readyState !== "open") return;
     const text = JSON.stringify(message);
@@ -396,7 +402,7 @@ export class PeerTransport {
         peer.queuedBytes -= text.length;
       });
   }
-  sendHost(message: Wire) {
+  sendHost(message: W) {
     if (this.remoteHost) this.send(this.remoteHost, message);
   }
   private drop(id: string) {

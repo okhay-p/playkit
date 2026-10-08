@@ -5,6 +5,7 @@ interface Env {
   ALLOWED_ORIGINS: string;
   ALLOW_LOCAL_ICE?: string;
   ICE_MODE?: "stun" | "turn";
+  LOCAL_ROOM_CREATE_LIMIT?: string;
   TURN_KEY_ID?: string;
   TURN_API_TOKEN?: string;
 }
@@ -121,7 +122,15 @@ export class Room {
         saved && now - saved.start < 3_600_000
           ? saved
           : { start: now, count: 0 };
-      if (++value.count > 10)
+      const localLimit = Number(this.env.LOCAL_ROOM_CREATE_LIMIT);
+      const limit =
+        this.env.ALLOW_LOCAL_ICE === "true" &&
+        Number.isInteger(localLimit) &&
+        localLimit >= 10 &&
+        localLimit <= 100
+          ? localLimit
+          : 10;
+      if (++value.count > limit)
         return json({ error: "Room creation limit reached. Try later." }, 429);
       await this.ctx.storage.put("limit", value);
       await this.ctx.storage.setAlarm(value.start + 3_600_000);

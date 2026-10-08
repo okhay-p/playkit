@@ -30,7 +30,7 @@ export default defineConfig({
         },
         {
           command:
-            "rm -rf .wrangler/e2e && npm run dev:signaling -- --persist-to .wrangler/e2e",
+            "rm -rf .wrangler/e2e && npm run dev:signaling -- --persist-to .wrangler/e2e --var LOCAL_ROOM_CREATE_LIMIT:100",
           url: "http://127.0.0.1:8787",
           reuseExistingServer: false,
           timeout: 120_000,

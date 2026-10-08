@@ -1,6 +1,6 @@
 # Deployment note
 
-The intended production origin is **https://playkit.oakkarphyo.com**. The shared-device frontend is deployed at **https://playkit-677.pages.dev**. Its custom domain has a proxied CNAME configured, and HTTPS checks succeed. Shared poker and the shared chess clock can launch as a static HTTPS site without a backend or accounts. Optional poker phone joining uses the signaling Worker, SQLite Durable Objects, and free Cloudflare STUN. Direct connections may fail on restrictive networks; metered TURN remains disabled. Clerk accounts are still a future feature; no auth setup or SDK is required now.
+The intended production origin is **https://playkit.oakkarphyo.com**. The shared-device frontend is deployed at **https://playkit-677.pages.dev**. Its custom domain has a proxied CNAME configured, and HTTPS checks succeed. Shared poker and the shared chess clock can launch as a static HTTPS site without a backend or accounts. Optional phone joining for poker, scorekeeper, tournaments, and word games uses the signaling Worker, SQLite Durable Objects, and free Cloudflare STUN. Direct connections may fail on restrictive networks; metered TURN remains disabled. Clerk accounts are still a future feature; no auth setup or SDK is required now.
 
 ## Current deployment
 
@@ -70,9 +70,9 @@ Use the actual Pages hostname; do not include `https://` or a path in the DNS ta
 
 These are the [Cloudflare Pages custom-domain steps](https://developers.cloudflare.com/pages/configuration/custom-domains/). The project and Pages domain registration already exist; the CNAME is configured and HTTPS checks succeed. Do not create a second project to finish the domain setup.
 
-## 4. Enable optional poker phone joining
+## 4. Enable optional phone joining
 
-The current free-only deployment uses STUN and direct WebRTC. The TURN steps below are an optional future relay upgrade; do not perform them under the free-only constraint. Use `https://playkit.oakkarphyo.com` as the frontend origin, then:
+The current free-only deployment uses STUN and direct WebRTC. Keep `ICE_MODE=stun`, deploy with `npm run deploy:signaling`, and set the Pages production `VITE_SIGNALING_URL` to the Worker URL. No TURN key or account SDK is required. The TURN steps below are an optional future relay upgrade; skip step 3 under the free-only constraint. Use `https://playkit.oakkarphyo.com` as the frontend origin, then:
 
 1. In `wrangler.jsonc`, verify `env.production.vars.ALLOWED_ORIGINS` is `https://playkit.oakkarphyo.com`, as configured in the repository. Additional stable custom origins can be comma-separated. Do not allow arbitrary preview origins or use a wildcard. Keep `ALLOW_LOCAL_ICE` set to `false`.
 2. Log in with `npx wrangler login`. Keep the Workers Free plan and use the configured SQLite Durable Object migration. No database containing game state is needed on Cloudflare.
@@ -84,7 +84,7 @@ npx wrangler secret put TURN_API_TOKEN --env production
 npm run deploy:signaling
 ```
 
-If Wrangler requires the Worker to exist before adding secrets, deploy it first; joining remains unavailable until TURN secrets are configured. Never put these secrets in `VITE_*`, Git, Pages build variables, screenshots, or frontend code.
+If Wrangler requires the Worker to exist before adding secrets, deploy it first; joining in TURN mode remains unavailable until TURN secrets are configured; STUN mode needs no TURN secrets. Never put these secrets in `VITE_*`, Git, Pages build variables, screenshots, or frontend code.
 
 4. Copy the **production** Worker HTTPS URL printed by Wrangler. Add it as the Pages production build variable `VITE_SIGNALING_URL`, then rebuild/deploy the frontend. This variable is public and compiled into the bundle. Changing it requires a new build.
 5. Leave `VITE_ICE_TRANSPORT_POLICY` unset for normal direct connections with TURN fallback. For a dedicated relay acceptance build, set it to `relay`, rebuild, verify relay connectivity, then remove it and rebuild for normal release.
@@ -103,8 +103,8 @@ The app limits rooms, peers, signaling messages, credential issuance, and invita
 
 - On the deployed HTTPS origin, create a poker table, play through showdown/settlement, reload, and explicitly resume. Wait for **Offline ready**, disconnect, and repeat a reload.
 - Open the chess clock, configure separate times/increment, switch turns, pause, reset, and reload. Recovery must be paused. Background the app on a real phone/tablet and confirm play pauses and wake lock behaves acceptably.
-- Before offering joining, test a host plus two physical phones on mixed Wi-Fi/mobile data; repeat with relay forced and inspect WebRTC connection statistics for relay candidates. Verify all ten seats, host reload, phone sleep/rejoin, revocation, and room expiry. These checks remain pending; local automated browser tests cannot establish real-network TURN behavior.
-- Confirm direct route reloads work and an update is offered only safely: poker between hands/settled, chess paused. Disable optional analytics/font integrations so the deployed behavior matches local privacy expectations.
+- Deployed automated browser checks cover poker joining, full-hand settlement, ten seats, reload recovery, and revocation. Test a host plus two physical phones on mixed Wi-Fi/mobile data, phone sleep/rejoin, and room expiry separately. Physical mixed-network acceptance remains pending. Do not force relay in the current STUN-only deployment; relay testing requires a separately approved TURN setup.
+- Confirm direct reloads of `/scorekeeper`, `/tournament`, `/undercover`, `/imposter`, and `/tools/join` as well as the poker/chess routes. Check score corrections, bracket resets, word-card privacy, and phone permissions. An update must be offered only safely: poker between hands/settled, chess paused, and word games ended. Disable optional analytics/font integrations so the deployed behavior matches local privacy expectations.
 
 ## Updates, recovery, and rollback
 

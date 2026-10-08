@@ -15,6 +15,8 @@ import { useWakeLock } from "./ui/use-wake-lock";
 import { initializeSync, useSync } from "./sync/controller";
 import { useSession } from "./ui/use-session";
 import { useClock } from "./chess/store";
+import { loadTool, useTool } from "./games/store";
+import { useToolPhones } from "./games/phones";
 
 let requestUpdate: ((reload?: boolean) => Promise<void>) | undefined;
 let updateReady = false;
@@ -46,7 +48,13 @@ requestUpdate = registerSW({
 function Root() {
   const state = useSession();
   const chess = useClock();
-  const syncState = useSync();
+  const undercover = useTool("undercover");
+  const imposter = useTool("imposter");
+  const scores = useTool("scorekeeper");
+  const tournament = useTool("tournament");
+  const pokerSync = useSync();
+  const toolSync = useToolPhones();
+  const syncState = toolSync.role ? toolSync : pokerSync;
   useWakeLock(syncState.role === "host");
   const [online, setOnline] = useState(navigator.onLine);
   const [clear, setClear] = useState(false);
@@ -61,6 +69,8 @@ function Root() {
   );
   useEffect(() => {
     void loadSession().then(initializeSync);
+    void loadTool("undercover");
+    void loadTool("imposter");
     const sync = () => setOnline(navigator.onLine);
     window.addEventListener("online", sync);
     window.addEventListener("offline", sync);
@@ -70,7 +80,16 @@ function Root() {
     };
   }, []);
   const safeUpdate =
+    (!toolSync.view ||
+      !("phase" in toolSync.view) ||
+      toolSync.view.phase === "finished") &&
     chess.clock?.phase !== "running" &&
+    (!undercover.game ||
+      !("phase" in undercover.game) ||
+      undercover.game.phase === "finished") &&
+    (!imposter.game ||
+      !("phase" in imposter.game) ||
+      imposter.game.phase === "finished") &&
     (!state.current ||
       ["between", "settled"].includes(state.current.core.phase));
   return (
@@ -135,9 +154,19 @@ function Root() {
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-slate-500 sm:px-8">
         <span>Tools for real-world play. Keep the cards on the table.</span>
         <span role="status">
-          {state.busy || chess.busy
+          {state.busy ||
+          chess.busy ||
+          undercover.busy ||
+          imposter.busy ||
+          scores.busy ||
+          tournament.busy
             ? "Saving…"
-            : state.current || chess.clock
+            : state.current ||
+                chess.clock ||
+                undercover.game ||
+                imposter.game ||
+                scores.game ||
+                tournament.game
               ? syncState.role === "guest" && state.current
                 ? "Last table update saved on this phone"
                 : "Saved on this device"
@@ -151,11 +180,19 @@ function Root() {
             An update is ready.{" "}
             {safeUpdate
               ? "Your saved games will stay here."
-              : "Finish any active hand and pause the clock to update."}
+              : "Finish any active hand or word game and pause the clock to update."}
           </p>
           <button
             className={primary}
-            disabled={!safeUpdate || state.busy || chess.busy}
+            disabled={
+              !safeUpdate ||
+              state.busy ||
+              chess.busy ||
+              undercover.busy ||
+              imposter.busy ||
+              scores.busy ||
+              tournament.busy
+            }
             onClick={() => void requestUpdate?.(true)}
           >
             Update
@@ -247,23 +284,31 @@ function Home() {
           </Link>
         </section>
         {[
-          ["Scorekeeper", "Keep player and team scores, round by round.", "▤"],
+          [
+            "Scorekeeper",
+            "Keep player and team scores, round by round.",
+            "▤",
+            "/scorekeeper",
+          ],
           [
             "Tournament manager",
             "Organize matches and see who plays next.",
             "⚑",
+            "/tournament",
           ],
           [
             "Undercover",
             "Similar words. Hidden sides. Find who doesn’t belong.",
             "◈",
+            "/undercover",
           ],
           [
             "Imposter",
             "One secret word. Someone has to bluff without it.",
             "?",
+            "/imposter",
           ],
-        ].map(([name, description, icon]) => (
+        ].map(([name, description, icon, path]) => (
           <section
             key={name}
             className="rounded-3xl border border-slate-200 bg-white p-7"
@@ -271,11 +316,20 @@ function Home() {
             <div className="mb-5 text-5xl" aria-hidden="true">
               {icon}
             </div>
-            <Tag>Coming soon</Tag>
+            <Tag>Shared device · offline</Tag>
             <h2 className="mt-3 font-display text-3xl font-extrabold">
               {name}
             </h2>
             <p className="mt-3 text-slate-500">{description}</p>
+            <Link
+              to={
+                path as
+                  "/scorekeeper" | "/tournament" | "/undercover" | "/imposter"
+              }
+              className={`${primary} mt-6 inline-block`}
+            >
+              Open {name} →
+            </Link>
           </section>
         ))}
       </div>
@@ -319,6 +373,42 @@ const chessRoute = createRoute({
   path: "/chess",
   component: lazyRouteComponent(() => import("./ui/chess"), "Chess"),
 });
+const toolRoutes = [
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/tools/join",
+    component: lazyRouteComponent(() => import("./ui/tool-phones"), "ToolJoin"),
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/scorekeeper",
+    component: lazyRouteComponent(
+      () => import("./ui/game-tools"),
+      "Scorekeeper",
+    ),
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/tournament",
+    component: lazyRouteComponent(
+      () => import("./ui/game-tools"),
+      "TournamentManager",
+    ),
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/undercover",
+    component: lazyRouteComponent(
+      () => import("./ui/game-tools"),
+      "Undercover",
+    ),
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/imposter",
+    component: lazyRouteComponent(() => import("./ui/game-tools"), "Imposter"),
+  }),
+];
 const router = createRouter({
   routeTree: rootRoute.addChildren([
     homeRoute,
@@ -326,6 +416,7 @@ const router = createRouter({
     tableRoute,
     joinRoute,
     chessRoute,
+    ...toolRoutes,
   ]),
 });
 declare module "@tanstack/react-router" {
