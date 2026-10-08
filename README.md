@@ -9,3 +9,5 @@ Planned features:
 - A shared-device chess clock.
 
 The project is currently in the specification stage. See [the implementation spec](docs/implementation-spec.md) for agreed behavior, architecture, and delivery milestones.
+
+The selected UI direction is [A — Table Club](docs/ui-direction.md). Interactive comparison prototypes are preserved on the [`prototype/ui-variants` branch](https://github.com/okhay-p/playkit/tree/prototype/ui-variants).

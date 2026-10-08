@@ -2,6 +2,8 @@
 
 Status: ready for implementation. No application has been implemented yet.
 
+Selected UI direction: **A — Table Club**, chosen from the interactive prototypes. See [the UI decision](ui-direction.md) for the visual direction and primary source references.
+
 ## Purpose and scope
 
 Playkit supports people playing physical games together. It handles bookkeeping and timing while cards, boards, conversation, and play remain at the table.
