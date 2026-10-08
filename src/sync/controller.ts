@@ -465,13 +465,17 @@ async function connectGuest() {
       if (expired)
         void leavePhone("This invitation has expired or the table has closed.");
     },
-    open: () =>
+    open: () => {
+      // A host refresh can replace the data channel without replacing guest signaling.
+      // Reconcile uncertain submissions once per fresh channel, using their original IDs.
+      resubmitted = false;
       transport?.sendHost({
         type: "hello",
         version: 1,
         credential: state.guest!.credential,
         name: state.guest!.name,
-      }),
+      });
+    },
     close: () => {
       publish({ connected: false, paused: true });
       if (unresolved) {

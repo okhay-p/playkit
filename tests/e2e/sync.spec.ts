@@ -206,7 +206,11 @@ test("phones recover after client/host refresh, freeze offline, and require appr
         (window as Window & { dropPokerAck?: boolean }).dropPokerAck
       ) {
         const chunk = JSON.parse(data);
-        if (chunk.index === 0 && JSON.parse(chunk.text).type === "ack") return;
+        if (chunk.index === 0 && JSON.parse(chunk.text).type === "ack") {
+          const testWindow = window as Window & { droppedPokerAcks?: number };
+          testWindow.droppedPokerAcks = (testWindow.droppedPokerAcks ?? 0) + 1;
+          return;
+        }
       }
       Reflect.apply(original, this, [data]);
     };
@@ -237,7 +241,26 @@ test("phones recover after client/host refresh, freeze offline, and require appr
     await expect(
       host.getByRole("heading", { name: "Alex’s turn" }),
     ).toBeVisible();
+    await expect
+      .poll(() =>
+        host.evaluate(
+          () =>
+            (window as Window & { droppedPokerAcks?: number })
+              .droppedPokerAcks ?? 0,
+        ),
+      )
+      .toBeGreaterThanOrEqual(2);
     await phone.reload();
+    // Confirm rejoin reached the old host and consumed its one retry before restarting it.
+    await expect
+      .poll(() =>
+        host.evaluate(
+          () =>
+            (window as Window & { droppedPokerAcks?: number })
+              .droppedPokerAcks ?? 0,
+        ),
+      )
+      .toBeGreaterThanOrEqual(3);
     await host.reload();
     await expect(
       host.getByRole("button", { name: "Resume game", exact: true }),
