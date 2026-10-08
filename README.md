@@ -32,11 +32,11 @@ The static `dist/` output can be hosted over HTTPS. Configure any host to serve 
 
 ```sh
 npm run check
-npx playwright install chromium
+npx playwright install chromium firefox webkit
 npm run test:e2e
 ```
 
-The browser suite starts and stops its own production preview server. It covers desktop and touch phone Chromium contexts. Real Safari/iOS and physical-device usability are still release validation tasks.
+The browser suite starts and stops its own production preview server. It covers desktop and touch phone Chromium, Firefox, and WebKit contexts. Actual Safari/iOS, Zen profiles, and physical-device usability are still release validation tasks. Headless WebKit runs with one worker to avoid software-renderer contention; its full two-hand walkthrough can take several minutes.
 
 ## Implementation references
 

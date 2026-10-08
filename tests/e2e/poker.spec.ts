@@ -52,6 +52,9 @@ async function saved(page: Page) {
 test("plays a complete physical hand, restores a preview, settles, and corrects it", async ({
   page,
 }) => {
+  // This walkthrough spans two hands and dozens of native dialog/card interactions.
+  // Headless WebKit's software renderer needs more total time; each action still has a 15s limit.
+  test.setTimeout(240_000);
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await setup(page);
@@ -352,5 +355,133 @@ test("a failed storage transaction never advances the visible turn", async ({
   await act(page, "Call 10");
   await expect(
     page.getByRole("heading", { name: "Alex’s turn" }),
+  ).toBeVisible();
+});
+
+test("heads-up betting, raises, fold payout, and pre-hand recovery work end to end", async ({
+  page,
+}) => {
+  await page.goto("/poker/new");
+  await page
+    .getByRole("button", { name: "Remove seat 4", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Remove seat 3", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Create table", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Start hand", exact: true }),
+  ).toBeEnabled();
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Start hand", exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Resume game", exact: true }).click();
+  await page.getByRole("button", { name: "Start hand", exact: true }).click();
+  await confirm(page);
+  await expect(
+    page.getByRole("heading", { name: "Alex’s turn" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Raise", exact: true }).click();
+  await page.getByLabel("Total bet on this street").fill("40");
+  await page
+    .getByRole("button", { name: "Record raise to 40", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Jordan’s turn" }),
+  ).toBeVisible();
+  await act(page, "Call 30");
+  await page.getByRole("button", { name: "Flop dealt", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Jordan’s turn" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Bet", exact: true }).click();
+  await page.getByLabel("Total bet on this street").fill("50");
+  await page
+    .getByRole("button", { name: "Record bet to 50", exact: true })
+    .click();
+  await act(page, "Call 50");
+  await page.getByRole("button", { name: "Turn dealt", exact: true }).click();
+  await act(page, "Check");
+  await page.getByRole("button", { name: "Bet", exact: true }).click();
+  await page.getByLabel("Total bet on this street").fill("40");
+  await page
+    .getByRole("button", { name: "Record bet to 40", exact: true })
+    .click();
+  await act(page, "Fold");
+  await expect(
+    page.getByRole("heading", { name: "Chips settled ✓" }),
+  ).toBeVisible();
+  const result = await saved(page);
+  expect(result.core.players.map((p: any) => p.stack)).toEqual([1090, 910]);
+  expect(result.core.refunds.map((r: any) => r.amount)).toEqual([40]);
+  await page.getByRole("button", { name: "Next hand", exact: true }).click();
+  await confirm(page);
+  await expect(
+    page.getByRole("heading", { name: "Jordan’s turn" }),
+  ).toBeVisible();
+  expect((await saved(page)).core.handNumber).toBe(2);
+});
+
+test("short all-in blind runs out, settles, rebuys, and starts another hand", async ({
+  page,
+}) => {
+  await page.goto("/poker/new");
+  await page
+    .getByRole("button", { name: "Remove seat 4", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Remove seat 3", exact: true })
+    .click();
+  await page.getByLabel("Player 1 chips", { exact: true }).fill("100");
+  await page.getByLabel("Player 2 chips", { exact: true }).fill("3");
+  await page.getByRole("button", { name: "Create table", exact: true }).click();
+  await page.getByRole("button", { name: "Start hand", exact: true }).click();
+  await confirm(page);
+  for (const street of ["Flop", "Turn", "River"])
+    await page
+      .getByRole("button", { name: `${street} dealt`, exact: true })
+      .click();
+  await page.getByRole("button", { name: "Enter cards", exact: true }).click();
+  for (const [i, card] of ["2c", "3d", "7h", "9s", "Jc"].entries())
+    await page.getByLabel(`Community card ${i + 1}`).selectOption(card);
+  for (const [name, cards] of Object.entries({
+    Alex: ["As", "Ad"],
+    Jordan: ["Ks", "Kd"],
+  }))
+    for (const [i, card] of cards.entries())
+      await page.getByLabel(`${name} card ${i + 1}`).selectOption(card);
+  await page
+    .getByRole("button", { name: "Save showdown cards", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Preview payout", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Confirm payout", exact: true })
+    .click();
+  await confirm(page);
+  expect((await saved(page)).core.players.map((p: any) => p.stack)).toEqual([
+    103, 0,
+  ]);
+  await expect(
+    page.getByRole("button", { name: "Next hand", exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Table", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("combobox", { name: "Player", exact: true })
+    .selectOption({ label: "Jordan" });
+  await page
+    .getByRole("dialog")
+    .getByRole("spinbutton", { name: "Chips", exact: true })
+    .fill("50");
+  await page.getByRole("button", { name: "Record rebuy", exact: true }).click();
+  await expect(page.getByText("153 total chips")).toBeVisible();
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await page.getByRole("button", { name: "Next hand", exact: true }).click();
+  await confirm(page);
+  await expect(
+    page.getByRole("heading", { name: "Jordan’s turn" }),
   ).toBeVisible();
 });

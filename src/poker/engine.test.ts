@@ -9,7 +9,7 @@ import {
   restoreSession,
   showdownResult,
 } from "./engine";
-import { evaluate, compareRanks } from "./cards";
+import { DECK, evaluate, compareRanks } from "./cards";
 import { MAX_CHIPS, type Command, type Session } from "./model";
 
 function table(stacks = [1000, 1000, 1000, 1000], bigBlind = 10) {
@@ -464,4 +464,73 @@ describe("showdown, pots and correction", () => {
       assertInvariants(s);
     }
   });
+});
+
+describe("whole hands across starting configurations", () => {
+  const configurations = Array.from({ length: 9 }, (_, i) => i + 2).flatMap(
+    (seats) =>
+      Array.from(
+        { length: seats },
+        (_, dealerIndex) => [seats, dealerIndex] as const,
+      ),
+  );
+  it.each(configurations)(
+    "starts and settles %i seats with dealer %i",
+    (seats, dealerIndex) => {
+      let hands = 0;
+      for (const [smallBlind, bigBlind] of [
+        [1, 2],
+        [5, 10],
+        [10, 20],
+      ]) {
+        for (const pattern of [[1], [100], [1, 5, 10, 100]]) {
+          let s = createSession(
+            {
+              name: "Starting configuration",
+              smallBlind,
+              bigBlind,
+              dealerIndex,
+              players: Array.from({ length: seats }, (_, i) => ({
+                name: `Seat ${i + 1}`,
+                stack: pattern[i % pattern.length],
+              })),
+            },
+            `configuration:${seats}:${dealerIndex}:${hands++}`,
+          );
+          const total = s.core.totalChips;
+          s = command(s, { type: "start" });
+          let steps = 0;
+          while (!["showdown", "settled"].includes(s.core.phase)) {
+            expect(steps++).toBeLessThan(50);
+            if (s.core.phase === "awaiting") s = command(s, { type: "deal" });
+            else {
+              const a = legalActions(s.core)!;
+              s = action(s, a.allIn ? "all-in" : a.check ? "check" : "call");
+            }
+            assertInvariants(s);
+          }
+          if (s.core.phase === "showdown") {
+            s = command(s, {
+              type: "showdown",
+              board: DECK.slice(0, 5),
+              hands: Object.fromEntries(
+                s.core.players
+                  .filter((p) => p.status === "active")
+                  .map((p, i) => [p.id, DECK.slice(5 + i * 2, 7 + i * 2)]),
+              ),
+              mucked: [],
+            });
+            s = command(s, { type: "preview" });
+            s = restoreSession(JSON.parse(JSON.stringify(s)));
+            s = command(s, { type: "settle" });
+          }
+          expect(s.core.phase).toBe("settled");
+          expect(s.core.players.reduce((sum, p) => sum + p.stack, 0)).toBe(
+            total,
+          );
+        }
+      }
+      expect(hands).toBe(9);
+    },
+  );
 });
