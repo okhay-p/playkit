@@ -28,7 +28,7 @@
   "env": {
     "production": {
       "vars": {
-        "ALLOWED_ORIGINS": "",
+        "ALLOWED_ORIGINS": "https://playkit.oakkarphyo.com",
         "ALLOW_LOCAL_ICE": "false",
       },
       "durable_objects": {

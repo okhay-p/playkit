@@ -1,6 +1,6 @@
 # Deployment note
 
-PlayKit has not been deployed to Cloudflare. Shared poker and the shared chess clock can launch as a static HTTPS site without a backend or accounts. Optional poker phone joining additionally needs the signaling Worker, SQLite Durable Objects, and Cloudflare TURN. Clerk accounts are still a future feature; no auth setup or SDK is required now.
+The intended production origin is **https://playkit.oakkarphyo.com**. PlayKit has not been deployed to Cloudflare. Shared poker and the shared chess clock can launch as a static HTTPS site without a backend or accounts. Optional poker phone joining additionally needs the signaling Worker, SQLite Durable Objects, and Cloudflare TURN. Clerk accounts are still a future feature; no auth setup or SDK is required now.
 
 ## 1. Prepare a release
 
@@ -29,7 +29,7 @@ Recommended: create a **Pages project with Git integration** in the Cloudflare d
 | Build environment | Set `NODE_VERSION` to an available, current Node 22.12+ version                |
 | Signaling URL     | Omit initially; later set `VITE_SIGNALING_URL=https://YOUR-WORKER.workers.dev` |
 
-Use the assigned `https://YOUR-PROJECT.pages.dev` origin initially; a custom domain is optional. No Pages Functions are needed. Cloudflare Pages provides SPA fallback when there is no top-level `404.html`; this repo intentionally has none. Verify direct navigation and reload on `/poker`, `/chess`, and `/join`. See [React deployment](https://developers.cloudflare.com/pages/framework-guides/deploy-a-react-site/) and [SPA routing](https://developers.cloudflare.com/pages/configuration/serving-pages/).
+Use the assigned `https://YOUR-PROJECT.pages.dev` URL to check the initial build, then attach the production subdomain before creating games you want to keep. No Pages Functions are needed. Cloudflare Pages provides SPA fallback when there is no top-level `404.html`; this repo intentionally has none. Verify direct navigation and reload on `/poker`, `/chess`, and `/join`. See [React deployment](https://developers.cloudflare.com/pages/framework-guides/deploy-a-react-site/) and [SPA routing](https://developers.cloudflare.com/pages/configuration/serving-pages/).
 
 For manual uploads instead of Git integration, use the already-installed Wrangler:
 
@@ -42,11 +42,27 @@ npx wrangler pages deploy dist --project-name YOUR-PROJECT --branch main
 
 Choose Git integration or Direct Upload when creating the project; a Direct Upload project cannot later switch to Git integration. Git integration is preferable for this public repository. See [Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/) and [Wrangler Pages commands](https://developers.cloudflare.com/workers/wrangler/commands/pages/).
 
-## 3. Enable optional poker phone joining
+## 3. Attach playkit.oakkarphyo.com
 
-Do this only when you are ready to configure and validate TURN. First obtain the final frontend HTTPS origin, then:
+1. In the Pages project, open **Custom domains → Set up a domain** and enter `playkit.oakkarphyo.com`. Associate it with Pages before adding a DNS record.
+2. If `oakkarphyo.com` already uses Cloudflare DNS in this account, confirm the proposed CNAME record. Otherwise, keep your current DNS provider and add this record there:
 
-1. In `wrangler.jsonc`, set `env.production.vars.ALLOWED_ORIGINS` to that **exact origin**, for example `https://YOUR-PROJECT.pages.dev`. Additional stable custom origins can be comma-separated. Do not allow arbitrary preview origins or use a wildcard. Keep `ALLOW_LOCAL_ICE` set to `false`.
+| Type  | Name      | Target                   |
+| ----- | --------- | ------------------------ |
+| CNAME | `playkit` | `YOUR-PROJECT.pages.dev` |
+
+Use the actual Pages hostname; do not include `https://` or a path in the DNS target. A subdomain does not require moving the apex domain's nameservers to Cloudflare. Leave the apex website and mail records as they are. Check for an existing record at `playkit` before replacing it.
+
+3. Wait for the custom domain and HTTPS certificate to become active. Check `https://playkit.oakkarphyo.com`, including direct reloads of `/poker`, `/chess`, and `/join`. Configure any optional Pages-to-custom-domain redirect after activation.
+4. Use the custom domain consistently for play and invitation links. The app creates invitations from the current origin; games made on `pages.dev` do not migrate to the custom domain.
+
+These are the [Cloudflare Pages custom-domain steps](https://developers.cloudflare.com/pages/configuration/custom-domains/). No DNS records or Cloudflare resources have been changed by documenting this setup.
+
+## 4. Enable optional poker phone joining
+
+Do this only when you are ready to configure and validate TURN. Use `https://playkit.oakkarphyo.com` as the frontend origin, then:
+
+1. In `wrangler.jsonc`, verify `env.production.vars.ALLOWED_ORIGINS` is `https://playkit.oakkarphyo.com`, as configured in the repository. Additional stable custom origins can be comma-separated. Do not allow arbitrary preview origins or use a wildcard. Keep `ALLOW_LOCAL_ICE` set to `false`.
 2. Log in with `npx wrangler login`. Keep the Workers Free plan and use the configured SQLite Durable Object migration. No database containing game state is needed on Cloudflare.
 3. Create a Cloudflare Realtime TURN key. Keep its privileged credentials only in Worker secrets:
 
