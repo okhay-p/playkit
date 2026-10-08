@@ -2,7 +2,7 @@
 
 **Question:** Which layout makes it easiest to record spoken actions during a physical poker game, while keeping the same interface usable on optional player phones?
 
-**Verdict:** Awaiting user comparison. No design has been promoted to production.
+**Verdict:** The user selected **A — Table Club**: “i like variant A.” The selection is captured in [the main-branch UI decision](https://github.com/okhay-p/playkit/blob/main/docs/ui-direction.md) and [issue #1](https://github.com/okhay-p/playkit/issues/1). Production implementation remains pending; this branch preserves all three throwaway variants.
 
 This branch contains three structurally different layouts, using the supplied PlayKit brand guide: Play Blue `#3B82F6`, Field Green `#22C55E`, Coral Red `#F87171`, Sun Yellow `#FBBF24`, Ink Navy `#0F172A`, rounded display type, geometric shapes, and simple native chip illustrations. The geometric logo is an SVG approximation for this prototype, not a replacement master brand asset.
 
