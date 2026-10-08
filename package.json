@@ -1,0 +1,13 @@
+{
+  "name": "playkit-ui-prototype",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "prototype": "vite --host 0.0.0.0",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^7.2.2"
+  }
+}

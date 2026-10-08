@@ -9,3 +9,5 @@ Planned features:
 - A shared-device chess clock.
 
 The project is currently in the specification stage. See [the implementation spec](docs/implementation-spec.md) for agreed behavior, architecture, and delivery milestones.
+
+This is the **throwaway `prototype/ui-variants` branch**. It also contains [three interactive UI prototypes](prototype/README.md), not the production application. Run `npm install` once, then `npm run prototype` and open `/prototype/?variant=A`. Compare layouts with the floating bottom bar.
