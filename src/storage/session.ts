@@ -1,7 +1,7 @@
 import { createId } from "../id";
 import Dexie, { type EntityTable } from "dexie";
 import { applyCommand, createSession, restoreSession } from "../poker/engine";
-import { type Command, type Session } from "../poker/model";
+import { type Command, type Envelope, type Session } from "../poker/model";
 
 const db = new Dexie("playkit") as Dexie & {
   sessions: EntityTable<{ key: string; payload: Session }, "key">;
@@ -79,15 +79,23 @@ export async function newSession(input: Parameters<typeof createSession>[0]) {
   }
 }
 export async function dispatch(command: Command) {
+  if (!current) throw new Error("Wait for the table to be ready.");
+  return dispatchEnvelope({
+    id: createId(),
+    expectedRevision: current.revision,
+    at: new Date().toISOString(),
+    command,
+  });
+}
+export async function dispatchEnvelope(
+  envelope: Envelope,
+  sessionId = current?.core.id,
+) {
   if (busy || !current || recoveryPending)
     throw new Error("Wait for the table to be ready.");
   const before = current;
-  const envelope = {
-    id: createId(),
-    expectedRevision: before.revision,
-    at: new Date().toISOString(),
-    command,
-  };
+  if (sessionId !== before.core.id)
+    throw new Error("This command belongs to another table.");
   busy = true;
   failure = null;
   publish();

@@ -35,12 +35,15 @@ The following direct packages were announced before installation for the shared-
 | `vitest` | Pure engine/evaluator rule tests |
 | `@playwright/test` | Production-browser integration tests |
 | `prettier` | Development-only source formatting |
+| `wrangler`, `@cloudflare/workers-types` | Announced phone-sync development tools: local/deployed Worker runtime and platform type checking |
 
 The evaluator is implemented directly in `src/poker/cards.ts`; no poker evaluation library is added. React's native hooks manage UI/store subscriptions; no additional state-management or query library is installed. TypeScript uses strict checking and bundler resolution. Node 22.12+ is required.
 
+The phone-sync tooling adds Cloudflare’s Miniflare/workerd local runtime and its build/native support packages. The `sharp` transitive package is overridden to the patched `^0.35.5` release; the lockfile records this and `npm audit` reports no vulnerabilities. No direct WebRTC, QR, state, or auth library was added.
+
 Transitive integrations include Workbox for the service worker, Rolldown/esbuild-related build tooling, and TanStack/Dexie internals. They are recorded by the lockfile rather than independently selected as application libraries.
 
-Still to decide at later milestones: exact backend/auth SDK packages, deployment/host configuration, room authorization/retention, and any storage for future account features. Advance dependency notice continues to apply.
+Still to decide at later milestones: the auth SDK package set, live deployment/origin configuration, and any storage for future account features. Room authorization and temporary metadata retention are documented in [phone sync](phone-sync.md). Advance dependency notice continues to apply.
 
 ## Selected backend direction
 
@@ -65,7 +68,7 @@ Pricing checked 8 October 2026. Limits are provider/account quotas, not per-room
 
 The intended initial platform bill is USD 0 while usage stays within the allowances. Free Workers/Durable Object quotas can reject operations when exhausted. TURN can incur overage charges; use short-lived scoped credentials, app-level rate/usage limits, and monitoring, and verify available provider billing controls before activation. Do not promise a provider-enforced TURN hard spending cap without verifying it.
 
-No services have been provisioned, authentication SDKs installed, or deployments performed by this decision. Inform the user before adding Clerk SDKs, Cloudflare tooling, or other direct packages. Database selection for future account features remains a separate decision.
+Phone-sync implementation now includes the Worker configuration and native transport; see [configuration and validation](phone-sync.md). No live services have been provisioned, authentication SDKs installed, or deployments performed. Inform the user before adding Clerk SDKs, Cloudflare tooling, or other direct packages. Database selection for future account features remains a separate decision.
 
 ## References
 

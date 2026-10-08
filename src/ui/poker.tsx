@@ -2,24 +2,33 @@ import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { legalActions, potTotal } from "../poker/engine";
 import { STREETS, type Command, type Core } from "../poker/model";
-import { clearSession, dispatch, resumeSession } from "../storage/session";
+import { clearSession, resumeSession } from "../storage/session";
 import { useSession } from "./use-session";
 import { Modal, number, primary, secondary, Tag } from "./primitives";
 import { Raise } from "./raise";
 import { Cards } from "./cards";
+import { submit, useSync } from "../sync/controller";
+import { Phones, PhoneStatus } from "./phones";
 import { Manage } from "./manage";
 
-type Confirm = { title: string; description: string; command: Command };
+type Confirmation = { title: string; description: string; command: Command };
+type Confirm = Confirmation & { revision: number };
 export function Table() {
   const { current, busy, recoveryPending, failure } = useSession();
   const navigate = useNavigate();
-  const [confirm, setConfirm] = useState<Confirm | null>(null);
+  const sync = useSync();
+  const hostControls = sync.role !== "guest";
+  const [confirm, changeConfirm] = useState<Confirm | null>(null);
+  const setConfirm = (value: Confirmation | null) =>
+    changeConfirm(
+      value && current ? { ...value, revision: current.revision } : null,
+    );
   const [panel, setPanel] = useState<
-    "cards" | "raise" | "history" | "manage" | "end" | null
+    "cards" | "raise" | "history" | "manage" | "end" | "phones" | null
   >(null);
-  async function send(command: Command) {
+  async function send(command: Command, revision?: number) {
     try {
-      await dispatch(command);
+      await submit(command, revision);
       return true;
     } catch {
       return false;
@@ -49,7 +58,11 @@ export function Table() {
     ]?.id;
   const actions = legalActions(c);
   const between = c.phase === "between" || c.phase === "settled";
-  const disabled = busy || recoveryPending;
+  const disabled =
+    busy ||
+    recoveryPending ||
+    (!hostControls && (!sync.connected || sync.paused || !sync.seat));
+  const actionDisabled = disabled || (!hostControls && c.actor !== sync.seat);
   const names = (ids: string[]) =>
     ids
       .map((id) => c.players.find((p) => p.id === id)?.name ?? "Player")
@@ -89,27 +102,37 @@ export function Table() {
             <Tag>{c.handNumber ? `Hand ${c.handNumber}` : "Ready to deal"}</Tag>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {hostControls && (
+            <button
+              className={secondary}
+              disabled={busy || recoveryPending}
+              onClick={() => setPanel("phones")}
+            >
+              Phones
+            </button>
+          )}
           <button className={secondary} onClick={() => setPanel("history")}>
             History
           </button>
           <button
             className={secondary}
-            disabled={disabled || !between}
+            disabled={disabled || !hostControls || !between}
             onClick={() => setPanel("manage")}
           >
             Table
           </button>
           <button
             className={`${secondary} text-slate-500`}
-            disabled={disabled}
+            disabled={disabled || !hostControls}
             onClick={() => setPanel("end")}
           >
             End
           </button>
         </div>
       </div>
-      {recoveryPending && (
+      <PhoneStatus />
+      {recoveryPending && hostControls && (
         <section className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-blue-200 bg-blue-50 p-5">
           <div>
             <h2 className="font-bold">Your saved table is ready.</h2>
@@ -202,7 +225,11 @@ export function Table() {
                         </span>
                       )}
                       {active ? (
-                        <span className="text-green-700">YOUR TURN</span>
+                        <span className="text-green-700">
+                          {hostControls || sync.seat === p.id
+                            ? "YOUR TURN"
+                            : "ACTING"}
+                        </span>
                       ) : !between && p.status === "folded" ? (
                         "FOLDED"
                       ) : !between && p.status === "active" && p.stack === 0 ? (
@@ -266,7 +293,7 @@ export function Table() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     className={`${primary} col-span-2`}
-                    disabled={disabled}
+                    disabled={actionDisabled}
                     onClick={() => record(actions.check ? "check" : "call")}
                   >
                     {actions.check
@@ -275,21 +302,21 @@ export function Table() {
                   </button>
                   <button
                     className={secondary}
-                    disabled={disabled || !actions.raise}
+                    disabled={actionDisabled || !actions.raise}
                     onClick={() => setPanel("raise")}
                   >
                     {c.currentBet ? "Raise" : "Bet"}
                   </button>
                   <button
                     className={`${secondary} text-red-600`}
-                    disabled={disabled}
+                    disabled={actionDisabled}
                     onClick={() => record("fold")}
                   >
                     Fold
                   </button>
                   <button
                     className={`${secondary} col-span-2`}
-                    disabled={disabled || !actions.allIn}
+                    disabled={actionDisabled || !actions.allIn}
                     onClick={() => record("all-in")}
                   >
                     All-in · {number(actions.player.stack)}
@@ -302,7 +329,11 @@ export function Table() {
                   </p>
                 )}
                 <p className="mt-4 text-xs text-slate-400">
-                  Anyone can record the table’s actions.
+                  {hostControls
+                    ? "Anyone can record the table’s actions."
+                    : c.actor === sync.seat
+                      ? "Choose your action at the physical table, then record it here."
+                      : "Waiting for your turn. The host can record this player’s action."}
                 </p>
               </>
             ) : between ? (
@@ -321,7 +352,9 @@ export function Table() {
                 <button
                   className={`${primary} w-full`}
                   disabled={
-                    disabled || c.players.filter((p) => p.stack > 0).length < 2
+                    disabled ||
+                    !hostControls ||
+                    c.players.filter((p) => p.stack > 0).length < 2
                   }
                   onClick={() =>
                     setConfirm({
@@ -354,7 +387,7 @@ export function Table() {
                 </p>
                 <button
                   className={`${primary} w-full`}
-                  disabled={disabled}
+                  disabled={disabled || !hostControls}
                   onClick={() => void send({ type: "deal" })}
                 >
                   {STREETS[c.street + 1]} dealt
@@ -372,21 +405,21 @@ export function Table() {
                 </p>
                 <button
                   className={`${primary} w-full`}
-                  disabled={disabled}
+                  disabled={disabled || !hostControls}
                   onClick={() => setPanel("cards")}
                 >
                   Enter cards
                 </button>
                 <button
                   className={`${secondary} mt-3 w-full`}
-                  disabled={disabled}
+                  disabled={disabled || !hostControls}
                   onClick={() => void send({ type: "preview" })}
                 >
                   Preview payout
                 </button>
               </>
             )}
-            {current.undo.length > 0 && (
+            {hostControls && current.undo.length > 0 && (
               <button
                 className="mt-5 w-full text-sm font-bold text-slate-500 hover:text-play-blue disabled:opacity-40"
                 disabled={disabled}
@@ -423,7 +456,7 @@ export function Table() {
               </p>
               <button
                 className={`${primary} w-full`}
-                disabled={disabled}
+                disabled={disabled || !hostControls}
                 onClick={() =>
                   setConfirm({
                     title: "Confirm this payout?",
@@ -480,6 +513,11 @@ export function Table() {
         >
           <p className="mb-6 text-slate-500">{confirm.description}</p>
           {failure && <p className="mb-4 text-sm text-red-600">{failure}</p>}
+          {confirm.revision !== current.revision && (
+            <p role="alert" className="mb-4 text-sm text-red-700">
+              The table changed. Close this action and review the updated turn.
+            </p>
+          )}
           <div className="flex justify-end gap-3">
             <button
               className={secondary}
@@ -490,15 +528,22 @@ export function Table() {
             </button>
             <button
               className={primary}
-              disabled={busy || recoveryPending}
+              disabled={
+                disabled ||
+                (confirm !== null && confirm.revision !== current.revision)
+              }
               onClick={async () => {
-                if (await send(confirm.command)) setConfirm(null);
+                if (await send(confirm.command, confirm.revision))
+                  setConfirm(null);
               }}
             >
               Confirm
             </button>
           </div>
         </Modal>
+      )}
+      {panel === "phones" && hostControls && (
+        <Phones close={() => setPanel(null)} />
       )}
       {panel === "raise" && actions && (
         <Raise core={c} close={() => setPanel(null)} />

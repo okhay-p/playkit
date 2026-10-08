@@ -4,7 +4,7 @@ Tools for real-world play: a webapp that helps people play physical games togeth
 
 The first implementation milestone provides **shared-device no-limit Texas Hold’em**: setup for 2–10 seats, betting and turn enforcement, explicit physical dealing, showdown entry and mucking, side-pot payout previews, settlement, undo/history, rebuys, cashouts, and local recovery. Its interface follows [A — Table Club](docs/ui-direction.md).
 
-WebRTC phone synchronization, Cloudflare signaling/TURN, the chess clock, and future Clerk accounts are later milestones. They are not implemented or provisioned yet. Shared-device poker needs no backend or account.
+Optional **phone synchronization** now adds native WebRTC, host-approved seats, shared table/history, restricted player controls, idempotent actions, and recovery after host/client reload. The Cloudflare signaling Worker and TURN credential endpoint run locally; live services are not provisioned or deployed. See [phone-sync setup](docs/phone-sync.md). The chess clock and future Clerk accounts remain later milestones. Shared-device poker needs no backend or account.
 
 ## Run locally
 
@@ -36,7 +36,7 @@ npx playwright install chromium firefox webkit
 npm run test:e2e
 ```
 
-The browser suite starts and stops its own production preview server. It covers desktop and touch phone Chromium, Firefox, and WebKit contexts. Actual Safari/iOS, Zen profiles, and physical-device usability are still release validation tasks. Headless WebKit runs with one worker to avoid software-renderer contention; its full two-hand walkthrough can take several minutes.
+The browser suite starts and stops its own production preview and local signaling servers. Its sync flows use real WebRTC data channels between isolated host/phone browser contexts, including complete hand settlement/correction and recovery/revocation/closure. It covers desktop and touch phone Chromium, Firefox, and WebKit contexts. Actual Safari/iOS, Zen profiles, and physical-device usability are still release validation tasks. Headless WebKit runs with one worker to avoid software-renderer contention; its full two-hand walkthrough can take several minutes.
 
 ## Implementation references
 

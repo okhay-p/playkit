@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { legalActions } from "../poker/engine";
 import { type Core } from "../poker/model";
-import { dispatch } from "../storage/session";
+import { submit } from "../sync/controller";
 import { useSession } from "./use-session";
 import { field, Modal, number, primary, secondary } from "./primitives";
 
 export function Raise({ core, close }: { core: Core; close: () => void }) {
   const a = legalActions(core)!;
-  const { busy } = useSession();
+  const { busy, current } = useSession();
+  const [revision] = useState(current!.revision);
+  const stale = current?.revision !== revision;
   const [to, setTo] = useState(Math.min(a.minimum, a.maximum));
   const [error, setError] = useState("");
   return (
@@ -19,12 +21,15 @@ export function Raise({ core, close }: { core: Core; close: () => void }) {
         onSubmit={async (e) => {
           e.preventDefault();
           try {
-            await dispatch({
-              type: "action",
-              playerId: a.player.id,
-              kind: "raise",
-              to,
-            });
+            await submit(
+              {
+                type: "action",
+                playerId: a.player.id,
+                kind: "raise",
+                to,
+              },
+              revision,
+            );
             close();
           } catch (err) {
             setError(
@@ -53,6 +58,11 @@ export function Raise({ core, close }: { core: Core; close: () => void }) {
             ? "Only a short all-in is available."
             : `Minimum total ${number(a.minimum)} · maximum ${number(a.maximum)}.`}
         </p>
+        {stale && (
+          <p role="alert" className="mb-4 text-red-700">
+            The table changed. Close this action and review the updated turn.
+          </p>
+        )}
         {error && (
           <p role="alert" className="mb-4 text-red-600">
             {error}
@@ -74,7 +84,7 @@ export function Raise({ core, close }: { core: Core; close: () => void }) {
             All-in
           </button>
         </div>
-        <button className={`${primary} w-full`} disabled={busy}>
+        <button className={`${primary} w-full`} disabled={busy || stale}>
           Record {core.currentBet ? "raise" : "bet"} to {number(to)}
         </button>
       </form>
