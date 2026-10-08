@@ -81,7 +81,11 @@ function Root() {
                 : "Shared device"}
           </Tag>
           <span className="hidden text-sm text-slate-500 sm:block">
-            {online ? "Together at the table" : "Offline · keep playing"}
+            {online
+              ? "Together at the table"
+              : syncState.role === "guest"
+                ? "Offline · waiting for host"
+                : "Offline · keep playing"}
           </span>
         </div>
       </header>

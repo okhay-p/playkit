@@ -122,7 +122,10 @@ export class PeerTransport {
       .parse(value).iceServers;
     this.iceFetchedAt = Date.now();
     for (const peer of this.peers.values())
-      peer.pc.setConfiguration({ iceServers: this.ice });
+      peer.pc.setConfiguration({
+        ...peer.pc.getConfiguration(),
+        iceServers: this.ice,
+      });
     clearTimeout(this.iceTimer);
     if (!this.stopped && this.ice.some((server) => server.credential))
       this.iceTimer = setTimeout(
