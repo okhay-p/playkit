@@ -233,9 +233,9 @@ for (const kind of ["undercover", "imposter"] as const) {
         mimeType: "text/csv",
         buffer: Buffer.from(words),
       });
-    await expect(page.getByLabel("Custom words", { exact: true })).toHaveValue(
-      words,
-    );
+    await expect(
+      page.getByRole("textbox", { name: "Custom words", exact: true }),
+    ).toHaveValue(words);
     await page
       .getByRole("button", {
         name: `Start ${kind === "undercover" ? "Undercover" : "Imposter"}`,
