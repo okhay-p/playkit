@@ -13,6 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:quick": "playwright test --project=desktop --project=phone",
+    "test:e2e:timings": "node scripts/e2e-timings.mjs",
     "check": "tsc -b && npm run check:worker && vitest run",
     "format": "prettier --write src worker tests *.ts *.json *.jsonc index.html",
     "format:check": "prettier --check src worker tests *.ts *.json *.jsonc index.html",

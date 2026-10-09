@@ -1,8 +1,15 @@
 import { defineConfig, devices } from "@playwright/test";
+import { availableParallelism } from "node:os";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  workers: 2,
+  workers: process.env.CI
+    ? 2
+    : Math.min(4, Math.max(1, Math.floor(availableParallelism() / 2))),
+  reporter: [
+    ["list"],
+    ["json", { outputFile: "playwright-report/results.json" }],
+  ],
   timeout: 120_000,
   expect: { timeout: 8_000 },
   use: {
@@ -12,11 +19,20 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
+    // Schedule the longest browser first so its serial work overlaps the others.
+    {
+      name: "webkit",
+      workers: 1,
+      use: {
+        ...devices["Desktop Safari"],
+        // Match the other desktop projects; Safari's device preset uses 2x DPR,
+        // quadrupling raster work without adding functional assertions here.
+        deviceScaleFactor: process.env.PLAYKIT_E2E_RETINA === "1" ? 2 : 1,
+      },
+    },
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "phone", use: { ...devices["Pixel 7"] } },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
-    // Avoid contention between headless WebKit software renderers.
-    { name: "webkit", workers: 1, use: { ...devices["Desktop Safari"] } },
   ],
   webServer: process.env.PLAYKIT_LIVE_E2E
     ? undefined
