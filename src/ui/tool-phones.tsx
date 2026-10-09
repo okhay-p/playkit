@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { InvitationShare } from "./invitation-share";
 import { token } from "../sync/signaling";
 import { signalingEndpoint } from "../sync/controller";
 import {
@@ -37,7 +38,7 @@ export function ToolPhones({ kind, close }: { kind: Kind; close: () => void }) {
     }
   }
   return (
-    <Modal title="Phones in your game" close={close}>
+    <Modal title="Invite players" close={close}>
       {(error || s.error) && (
         <p role="alert" className="mb-4 text-red-700">
           {error || s.error}
@@ -55,7 +56,7 @@ export function ToolPhones({ kind, close }: { kind: Kind; close: () => void }) {
             disabled={working || !signalingEndpoint()}
             onClick={() => void work(() => enableToolJoining(kind))}
           >
-            Enable phone joining
+            Enable joining
           </button>
           {!signalingEndpoint() && (
             <p className="mt-3">Phone joining is not configured here.</p>
@@ -64,24 +65,12 @@ export function ToolPhones({ kind, close }: { kind: Kind; close: () => void }) {
       ) : (
         <>
           <Tag>{s.connected ? "Joining open" : "Joining disconnected"}</Tag>
-          <label className="my-4 block font-bold">
-            Game invitation
-            <input
-              className={`${field} mt-2`}
-              readOnly
-              value={toolInvitation()}
-              onFocus={(e) => e.target.select()}
-            />
-          </label>
+          <InvitationShare
+            link={toolInvitation()}
+            label="Game invitation"
+            disabled={working}
+          />
           <div className="flex gap-2">
-            <button
-              className={secondary}
-              onClick={() =>
-                void work(() => navigator.clipboard.writeText(toolInvitation()))
-              }
-            >
-              Copy invitation
-            </button>
             <button
               className={secondary}
               onClick={() => void work(reconnectToolPhones)}
@@ -140,7 +129,7 @@ export function ToolPhones({ kind, close }: { kind: Kind; close: () => void }) {
               className={`${secondary} mt-4`}
               onClick={() => setClosing(true)}
             >
-              Close phone joining
+              Close joining
             </button>
           ) : (
             <div className="mt-4 rounded-xl bg-red-50 p-4">

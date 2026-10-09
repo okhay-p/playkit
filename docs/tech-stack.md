@@ -19,7 +19,7 @@ Expected supporting integrations include React’s Vite plugin and Tailwind’s 
 
 ## Production implementation dependencies
 
-The following direct packages were announced before installation for the shared-poker milestone. Exact installed versions are recorded in `package-lock.json`; `package.json` declares compatible version ranges.
+The following direct packages were announced before installation for the shared-poker, phone-sync, and invitation-sharing updates. Exact installed versions are recorded in `package-lock.json`; `package.json` declares compatible version ranges.
 
 | Packages | Purpose |
 | --- | --- |
@@ -27,6 +27,8 @@ The following direct packages were announced before installation for the shared-
 | `tailwindcss`, `@tailwindcss/vite` | Agreed styling and Vite integration |
 | `@tanstack/react-router` | Agreed navigation; code-based routes with lazy UI loading |
 | `dexie` | Atomic IndexedDB persistence before publishing accepted actions |
+| `qrcode.react` | Locally generated SVG invitation QR codes, shared across poker and game tools |
+| `jsqr` | Development-only independent decoder to verify rendered invitation QR codes in browser tests |
 | `zod` | Saved-state and command validation at trust boundaries |
 | `@fontsource/dm-sans`, `@fontsource/nunito` | Locally bundled brand typography, available offline |
 | `typescript`, `@types/node`, `@types/react`, `@types/react-dom` | Strict checking and matching platform types |
@@ -39,7 +41,7 @@ The following direct packages were announced before installation for the shared-
 
 The evaluator is implemented directly in `src/poker/cards.ts`; no poker evaluation library is added. React's native hooks manage UI/store subscriptions; no additional state-management or query library is installed. TypeScript uses strict checking and bundler resolution. Node 22.12+ is required.
 
-The phone-sync tooling adds Cloudflare’s Miniflare/workerd local runtime and its build/native support packages. The `sharp` transitive package is overridden to the patched `^0.35.5` release; the lockfile records this and `npm audit` reports no vulnerabilities. No direct WebRTC, QR, state, or auth library was added.
+The phone-sync tooling adds Cloudflare’s Miniflare/workerd local runtime and its build/native support packages. The `sharp` transitive package is overridden to the patched `^0.35.5` release; the lockfile records this and `npm audit` reports no vulnerabilities. No direct WebRTC, state, or auth library was added. The invitation-sharing update adds `qrcode.react` and development-only `jsqr`; neither adds transitive npm dependencies.
 
 Transitive integrations include Workbox for the service worker, Rolldown/esbuild-related build tooling, and TanStack/Dexie internals. They are recorded by the lockfile rather than independently selected as application libraries.
 

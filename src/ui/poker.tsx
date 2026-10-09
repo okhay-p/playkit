@@ -109,7 +109,7 @@ export function Table() {
               disabled={busy || recoveryPending}
               onClick={() => setPanel("phones")}
             >
-              Phones
+              Invite
             </button>
           )}
           <button className={secondary} onClick={() => setPanel("history")}>

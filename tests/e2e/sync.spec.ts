@@ -16,9 +16,9 @@ async function enable(host: Page, seats = 4) {
       .getByRole("button", { name: "+ Add a seat", exact: true })
       .click();
   await host.getByRole("button", { name: "Create table", exact: true }).click();
-  await host.getByRole("button", { name: "Phones", exact: true }).click();
+  await host.getByRole("button", { name: "Invite", exact: true }).click();
   await host
-    .getByRole("button", { name: "Enable phone joining", exact: true })
+    .getByRole("button", { name: "Enable joining", exact: true })
     .click();
   const input = host.getByLabel("Invitation link");
   await expect(input).toBeVisible();
@@ -306,7 +306,7 @@ test("phones recover after client/host refresh, freeze offline, and require appr
     await expect(
       phone.getByRole("heading", { name: "Jordan’s turn" }),
     ).toBeVisible();
-    await host.getByRole("button", { name: "Phones", exact: true }).click();
+    await host.getByRole("button", { name: "Invite", exact: true }).click();
     await host
       .getByRole("button", { name: "Disconnect Casey phone", exact: true })
       .click();
@@ -322,7 +322,7 @@ test("phones recover after client/host refresh, freeze offline, and require appr
       phone.getByText("Your seat: Casey", { exact: true }),
     ).toBeVisible();
     await host
-      .getByRole("button", { name: "Close phone joining", exact: true })
+      .getByRole("button", { name: "Close joining", exact: true })
       .click();
     await host
       .getByRole("button", { name: "Confirm close joining", exact: true })
@@ -374,9 +374,9 @@ test("ten approved phone seats receive the same authoritative hand", async ({
       await expect(
         page.getByRole("heading", { name: "Player 5’s turn" }),
       ).toBeVisible();
-    await host.getByRole("button", { name: "Phones", exact: true }).click();
+    await host.getByRole("button", { name: "Invite", exact: true }).click();
     await host
-      .getByRole("button", { name: "Close phone joining", exact: true })
+      .getByRole("button", { name: "Close joining", exact: true })
       .click();
     await host
       .getByRole("button", { name: "Confirm close joining", exact: true })

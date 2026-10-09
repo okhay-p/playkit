@@ -207,9 +207,9 @@ test("Imposter receives no word and can win with a final guess", async ({
   await expect(page.getByText(/Civilian word:/)).toBeVisible();
 });
 async function openJoining(host: Page) {
-  await host.getByRole("button", { name: "Phones", exact: true }).click();
+  await host.getByRole("button", { name: "Invite", exact: true }).click();
   await host
-    .getByRole("button", { name: "Enable phone joining", exact: true })
+    .getByRole("button", { name: "Enable joining", exact: true })
     .click();
   await expect(host.getByLabel("Game invitation")).toBeVisible();
   return host.getByLabel("Game invitation").inputValue();
@@ -274,9 +274,9 @@ test("scorekeeper phones require approval and edit permission, sync, recover, an
     await expect(
       phone.page.getByText("Leading: Alex", { exact: true }),
     ).toBeVisible();
-    await host.getByRole("button", { name: "Phones", exact: true }).click();
+    await host.getByRole("button", { name: "Invite", exact: true }).click();
     await host
-      .getByRole("button", { name: "Close phone joining", exact: true })
+      .getByRole("button", { name: "Close joining", exact: true })
       .click();
     await host
       .getByRole("button", { name: "Confirm close joining", exact: true })
@@ -340,9 +340,9 @@ test("word-game phone gets only its own card and can finish only its own clue", 
     await expect(
       phone.page.getByRole("button", { name: "Start voting", exact: true }),
     ).toHaveCount(0);
-    await host.getByRole("button", { name: "Phones", exact: true }).click();
+    await host.getByRole("button", { name: "Invite", exact: true }).click();
     await host
-      .getByRole("button", { name: "Close phone joining", exact: true })
+      .getByRole("button", { name: "Close joining", exact: true })
       .click();
     await host
       .getByRole("button", { name: "Confirm close joining", exact: true })
