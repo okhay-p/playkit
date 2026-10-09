@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createId } from "../id";
+import { wordPool, type WordCategory } from "./word-packs";
 
 const point = z.number().int().min(-1_000_000).max(1_000_000);
 const player = z.object({
@@ -120,40 +121,6 @@ export const kinds = [
   "imposter",
 ] as const;
 export type Kind = (typeof kinds)[number];
-const pairs: [string, string][] = [
-  ["Coffee", "Tea"],
-  ["Beach", "Island"],
-  ["Train", "Bus"],
-  ["Cake", "Cookie"],
-  ["Guitar", "Piano"],
-  ["Rain", "Snow"],
-  ["Library", "Bookshop"],
-  ["Moon", "Sun"],
-  ["Pillow", "Blanket"],
-  ["River", "Lake"],
-  ["Bicycle", "Scooter"],
-  ["Pizza", "Burger"],
-  ["Camera", "Telescope"],
-  ["Football", "Basketball"],
-  ["Camping", "Picnic"],
-  ["Honey", "Sugar"],
-  ["Mountain", "Hill"],
-  ["Forest", "Garden"],
-  ["Boots", "Sneakers"],
-  ["Painting", "Drawing"],
-  ["Airport", "Station"],
-  ["Candle", "Lamp"],
-  ["Dolphin", "Whale"],
-  ["Soup", "Stew"],
-  ["Cinema", "Theatre"],
-  ["Wallet", "Purse"],
-  ["Chess", "Checkers"],
-  ["Ocean", "Sea"],
-  ["Lemon", "Lime"],
-  ["Violin", "Cello"],
-  ["Hotel", "Hostel"],
-  ["Kite", "Balloon"],
-];
 function randomInt(n: number) {
   const values = new Uint32Array(1),
     limit = Math.floor(0x1_0000_0000 / n) * n;
@@ -189,6 +156,8 @@ export function createGame(
     target?: number | null;
     mode?: "round-robin" | "knockout";
     minority?: number;
+    category?: WordCategory;
+    customWords?: string;
   } = {},
 ): Game {
   const players = makePlayers(names),
@@ -263,7 +232,12 @@ export function createGame(
       .slice(0, minority)
       .map((p) => p.id),
   );
-  const words = shuffle(pairs[randomInt(pairs.length)]) as [string, string];
+  const pool = wordPool(
+    kind,
+    options.category ?? "all",
+    options.customWords ?? "",
+  );
+  const words = shuffle(pool[randomInt(pool.length)]) as [string, string];
   return wordsSchema.parse({
     ...common,
     kind,

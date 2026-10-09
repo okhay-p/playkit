@@ -25,6 +25,11 @@ import {
 import { field, Modal, primary, secondary, Tag } from "./primitives";
 import { restoreToolHost, suspendToolPhones } from "../games/phones";
 import { ToolPhones } from "./tool-phones";
+import {
+  wordCategories,
+  maxCustomBytes,
+  type WordCategory,
+} from "../games/word-packs";
 
 export const toolTitles: Record<Kind, string> = {
   scorekeeper: "Scorekeeper",
@@ -50,6 +55,9 @@ function ToolSetup({
     [target, setTarget] = useState("");
   const [mode, setMode] = useState<"round-robin" | "knockout">("round-robin"),
     [minority, setMinority] = useState(1);
+  const [category, setCategory] = useState<WordCategory>("all");
+  const [customWords, setCustomWords] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   return (
@@ -70,6 +78,8 @@ function ToolSetup({
                 target: target === "" ? null : Number(target),
                 mode,
                 minority,
+                category,
+                customWords,
               },
             ),
           );
@@ -159,6 +169,86 @@ function ToolSetup({
       {(kind === "undercover" || kind === "imposter") && (
         <>
           <label className="block font-bold">
+            Word category
+            <select
+              className={`${field} mt-2`}
+              value={category}
+              disabled={uploading}
+              onChange={(e) => {
+                setCategory(e.target.value as WordCategory);
+                setError("");
+              }}
+            >
+              <option value="all">All · 64 words / 32 pairs</option>
+              {wordCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label} ·{" "}
+                  {kind === "undercover"
+                    ? `${c.pairs.length} pairs`
+                    : `${c.pairs.length * 2} words`}
+                </option>
+              ))}
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          {category === "custom" && (
+            <div className="space-y-3">
+              <label className="block font-bold">
+                Custom words
+                <textarea
+                  className={`${field} mt-2`}
+                  rows={4}
+                  value={customWords}
+                  disabled={uploading}
+                  onChange={(e) => setCustomWords(e.target.value)}
+                  aria-describedby="custom-word-help"
+                  placeholder="coffee, tea, beach, island"
+                />
+              </label>
+              <p id="custom-word-help" className="text-sm text-slate-500">
+                {kind === "undercover"
+                  ? "Each consecutive two words form a related pair. Use an even number, for example: coffee, tea, beach, island."
+                  : "Separate words or phrases with commas, for example: coffee, tea, beach. One word is chosen at random."}{" "}
+                Line breaks also work. No header. Up to 1,000 words, 80
+                characters each.
+              </p>
+              <label className="block font-bold">
+                Upload word list (.csv or .txt)
+                <input
+                  className={`${field} mt-2`}
+                  type="file"
+                  accept=".csv,.txt,text/csv,text/plain"
+                  disabled={uploading}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    setError("");
+                    if (file.size > maxCustomBytes) {
+                      setError("Use a word list smaller than 100 KB.");
+                      return;
+                    }
+                    setUploading(true);
+                    try {
+                      setCustomWords(await file.text());
+                    } catch {
+                      setError(
+                        "Could not read the word list. Try another file or paste it above.",
+                      );
+                    } finally {
+                      setUploading(false);
+                    }
+                  }}
+                />
+              </label>
+              {uploading && <p role="status">Reading word list…</p>}
+              <p className="text-sm text-slate-500">
+                Uploading replaces the text above. The list stays on this
+                device; its author may already know the answers.
+              </p>
+            </div>
+          )}
+          <label className="block font-bold">
             {kind === "undercover" ? "Undercover players" : "Imposters"}
             <input
               className={`${field} mt-2`}
@@ -186,7 +276,7 @@ function ToolSetup({
           {error}
         </p>
       )}
-      <button className={`${primary} w-full`} disabled={busy}>
+      <button className={`${primary} w-full`} disabled={busy || uploading}>
         Start {toolTitles[kind]}
       </button>
     </form>
