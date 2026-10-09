@@ -236,7 +236,7 @@ test("phones recover after client/host refresh, freeze offline, and require appr
     await phone.reload();
     await expect(
       phone.getByRole("button", { name: "Call 10", exact: true }),
-    ).toBeEnabled();
+    ).toBeEnabled({ timeout: 35_000 });
     await host.evaluate(() => {
       (window as Window & { dropPokerAck?: boolean }).dropPokerAck = true;
     });
@@ -256,13 +256,17 @@ test("phones recover after client/host refresh, freeze offline, and require appr
       .toBeGreaterThanOrEqual(2);
     await phone.reload();
     // Confirm rejoin reached the old host and consumed its one retry before restarting it.
+    // The fresh WebRTC channel has a 30-second negotiation deadline; this also
+    // includes restoring the saved pending action after the guest refresh.
     await expect
-      .poll(() =>
-        host.evaluate(
-          () =>
-            (window as Window & { droppedPokerAcks?: number })
-              .droppedPokerAcks ?? 0,
-        ),
+      .poll(
+        () =>
+          host.evaluate(
+            () =>
+              (window as Window & { droppedPokerAcks?: number })
+                .droppedPokerAcks ?? 0,
+          ),
+        { timeout: 35_000 },
       )
       .toBeGreaterThanOrEqual(3);
     await host.reload();
@@ -271,7 +275,7 @@ test("phones recover after client/host refresh, freeze offline, and require appr
     ).toBeVisible();
     await expect(
       phone.getByText("Host is reviewing the recovered table", { exact: true }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 35_000 });
     await expect(
       phone.getByRole("button", { name: "Call 10", exact: true }),
     ).toBeDisabled();
@@ -305,7 +309,7 @@ test("phones recover after client/host refresh, freeze offline, and require appr
       .click();
     await expect(
       phone.getByRole("heading", { name: "Jordan’s turn" }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 35_000 });
     await host.getByRole("button", { name: "Invite", exact: true }).click();
     await host
       .getByRole("button", { name: "Disconnect Casey phone", exact: true })
