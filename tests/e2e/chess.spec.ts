@@ -21,9 +21,11 @@ test("chess switches with increments, pauses, restores, expires and resets", asy
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  // Install before app timers start, and pause later than the initial time.
+  // Pausing at the runner's wall clock can race the browser clock under load.
+  await page.clock.install({ time: new Date("2026-01-01T08:00:00Z") });
   await setup(page);
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  await page.clock.pauseAt(new Date("2026-01-01T10:00:00Z"));
   await expect(page.getByTestId("clock-0")).toHaveText("1:00");
   await expect(page.getByTestId("clock-1")).toHaveText("1:30");
   await page.getByRole("button", { name: "Start clock", exact: true }).click();
@@ -35,6 +37,10 @@ test("chess switches with increments, pauses, restores, expires and resets", asy
   ).toBeDisabled();
   await page.clock.runFor(5000);
   await expect(page.getByTestId("clock-1")).toHaveText("1:25");
+  // Rendering the new time can precede the checkpoint's IndexedDB commit.
+  await expect(
+    page.getByRole("button", { name: "Black clock", exact: true }),
+  ).toBeEnabled();
   // Two taps queued before the first save finishes must switch only once.
   await page.evaluate(() => {
     const button = document.querySelector<HTMLButtonElement>(

@@ -54,7 +54,7 @@ function ToolSetup({
     [busy, setBusy] = useState(false);
   return (
     <form
-      className="mx-auto max-w-xl space-y-5 rounded-3xl border border-slate-200 bg-white p-6"
+      className="mx-auto max-w-xl space-y-5 surface p-6"
       onSubmit={async (e) => {
         e.preventDefault();
         setError("");
@@ -212,7 +212,7 @@ export function ScoreBoard({
     );
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
-      <section className="rounded-3xl bg-white p-6">
+      <section className="surface p-6">
         <h2 className="font-display text-2xl font-extrabold">Standings</h2>
         <p className="my-3 text-slate-500">
           {game.direction === "high" ? "Highest" : "Lowest"} score leads
@@ -287,7 +287,7 @@ export function ScoreBoard({
       </section>
       {!readOnly && (
         <form
-          className="h-fit space-y-4 rounded-3xl bg-white p-6"
+          className="h-fit space-y-4 surface p-6"
           onSubmit={async (e) => {
             e.preventDefault();
             try {
@@ -393,7 +393,7 @@ export function TournamentBoard({
         </p>
       )}
       {game.mode === "round-robin" && (
-        <section className="overflow-x-auto rounded-3xl bg-white p-6">
+        <section className="overflow-x-auto surface p-6">
           <h2 className="mb-4 font-display text-2xl font-extrabold">
             Standings
           </h2>
@@ -435,7 +435,7 @@ export function TournamentBoard({
         </section>
       )}
       {rounds.map((r) => (
-        <section key={r} className="rounded-3xl bg-white p-6">
+        <section key={r} className="surface p-6">
           <div className="mb-4 flex flex-wrap justify-between gap-3">
             <h2 className="font-display text-2xl font-extrabold">Round {r}</h2>
             {game.mode === "knockout" && !readOnly && (
@@ -563,7 +563,7 @@ export function WordBoard({
   const card = game.card;
   const eligible = game.runoff.length ? game.runoff : game.alive;
   return (
-    <section className="mx-auto max-w-3xl space-y-5 rounded-3xl bg-white p-6 sm:p-8">
+    <section className="mx-auto max-w-3xl space-y-5 surface p-6 sm:p-8">
       <Tag>
         Cycle {game.cycle} · {game.alive.length} still playing
       </Tag>

@@ -54,11 +54,11 @@ Open **http://localhost:4173** for the production preview. Wait for **Offline re
 ```sh
 npm run check
 npm run format:check
-npx playwright install chromium firefox webkit
+npx playwright install chromium
 npm run test:e2e
 ```
 
-`check` runs frontend/Worker type checks and unit tests. The browser suite starts its own production preview and local signaling server, so ports **4173** and **8787** must be free. It exercises all six tools, offline recovery, and real WebRTC data channels in desktop/touch Chromium, Firefox, and WebKit. Headless WebKit runs can take several minutes. Live TURN connectivity and physical-device usability still need release validation.
+`check` runs frontend/Worker type checks and unit tests. `test:e2e` runs desktop/touch Chromium for local feedback. The browser suite starts its own production preview and local signaling server, so ports **4173** and **8787** must be free. Pull requests to `main` run the full suite in GitHub Actions, including Firefox and two WebKit shards; the required `Quality gate` must pass before merging. Use `npm run test:e2e:full` for an explicit full local run after installing all three browsers, and `npm run test:e2e:timings` to inspect the last run. See [test performance and parallel execution](docs/testing.md) for the workflow, worker limits, and sharding. Live TURN connectivity and physical-device usability still need release validation.
 
 ## Explore the code
 
