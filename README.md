@@ -58,7 +58,7 @@ npx playwright install chromium firefox webkit
 npm run test:e2e
 ```
 
-`check` runs frontend/Worker type checks and unit tests. The browser suite starts its own production preview and local signaling server, so ports **4173** and **8787** must be free. It exercises all six tools, offline recovery, and real WebRTC data channels in desktop/touch Chromium, Firefox, and WebKit. Headless WebKit runs can take several minutes. Live TURN connectivity and physical-device usability still need release validation.
+`check` runs frontend/Worker type checks and unit tests. The browser suite starts its own production preview and local signaling server, so ports **4173** and **8787** must be free. It exercises all six tools, offline recovery, and real WebRTC data channels in desktop/touch Chromium, Firefox, and WebKit. Use `npm run test:e2e:quick` for desktop/touch Chromium feedback and `npm run test:e2e:timings` after a run to identify expensive tests. See [test performance and parallel execution](docs/testing.md) for worker limits, full browser coverage, and sharding across machines. Live TURN connectivity and physical-device usability still need release validation.
 
 ## Explore the code
 
