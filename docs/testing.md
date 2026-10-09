@@ -41,6 +41,8 @@ Work on feature branches and open pull requests targeting `main`. The [PR valida
 
 The quality job runs frontend/Worker type checks, all unit tests, formatting, shell syntax checks, and the production build. Five independent browser jobs run desktop Chromium, touch Chromium, Firefox, and two WebKit shards. Every browser job starts its own production preview and local signaling Worker; no production credentials are needed. Failure traces, screenshots, and timing reports are uploaded with seven-day retention.
 
+WebKit runners also install and start `avahi-daemon` with `libnss-mdns` for local WebRTC address resolution. Phone tests exchange `.local` ICE addresses and exercise real data channels; successful signaling alone does not establish a connection. These system packages are isolated to CI runners.
+
 The stable `Quality gate` job runs even when upstream jobs fail or are skipped. It accepts only `success` from both the quality job and the complete browser matrix. Failed, cancelled, or skipped validation blocks the gate. `test.only` is forbidden in CI. The existing browser-independent skips remain intentional: signaling HTTP checks and ten-phone capacity checks run once in desktop Chromium.
 
 An active GitHub branch ruleset for `main` requires a pull request, a successful `Quality gate` from GitHub Actions, an up-to-date branch, and resolved conversations. It blocks force pushes and branch deletion and has no bypass actors. Reviewer approvals are set to zero for solo development; add a reviewer requirement when a second reviewer is available. Configure these repository settings in GitHub; the workflow file alone does not protect the branch. Merge through the PR after the checks pass, rather than pushing a local merge to `main`.

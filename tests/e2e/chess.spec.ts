@@ -37,6 +37,10 @@ test("chess switches with increments, pauses, restores, expires and resets", asy
   ).toBeDisabled();
   await page.clock.runFor(5000);
   await expect(page.getByTestId("clock-1")).toHaveText("1:25");
+  // Rendering the new time can precede the checkpoint's IndexedDB commit.
+  await expect(
+    page.getByRole("button", { name: "Black clock", exact: true }),
+  ).toBeEnabled();
   // Two taps queued before the first save finishes must switch only once.
   await page.evaluate(() => {
     const button = document.querySelector<HTMLButtonElement>(

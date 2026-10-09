@@ -92,6 +92,9 @@ test("knockout handles a bye, advances winners, protects played later rounds, an
 });
 async function deal(page: Page, count: number) {
   for (let i = 0; i < count; i++) {
+    const player = await page
+      .getByRole("heading", { name: /^Pass to / })
+      .textContent();
     await page
       .getByRole("button", { name: "Reveal my card", exact: true })
       .click();
@@ -114,6 +117,11 @@ async function deal(page: Page, count: number) {
         exact: true,
       })
       .click();
+    // The next action persists asynchronously; don't reveal the previous card
+    // while its replacement and privacy reset are still pending.
+    await expect(
+      page.getByRole("heading", { name: player!, exact: true }),
+    ).toHaveCount(0);
   }
 }
 async function clues(page: Page, count: number) {

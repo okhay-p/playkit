@@ -65,6 +65,13 @@ jobs:
       - run: npm ci
       - name: Install the selected browser and system dependencies
         run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Enable local WebRTC address resolution for WebKit
+        if: ${{ matrix.browser == 'webkit' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y avahi-daemon libnss-mdns
+          sudo systemctl start avahi-daemon
+          systemctl is-active avahi-daemon
       - name: Run browser scenarios
         run: npm run test:e2e:full -- --project=${{ matrix.project }} --shard=${{ matrix.shard }}
       - name: Summarize test timings
