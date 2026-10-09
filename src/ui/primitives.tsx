@@ -1,11 +1,9 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
-export const primary =
-  "rounded-2xl bg-play-blue px-5 py-3 font-bold text-white shadow-sm hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors";
-export const secondary =
-  "rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors";
-export const field =
-  "w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none focus:border-play-blue focus:ring-2 focus:ring-blue-100";
+export const primary = "btn btn-primary";
+export const secondary = "btn btn-secondary";
+export const iconButton = "btn btn-secondary btn-icon";
+export const field = "field";
 export const number = (n: number) => n.toLocaleString();
 export function Modal({
   title,
@@ -32,13 +30,20 @@ export function Modal({
       onClick={(event) => {
         if (event.target === event.currentTarget) close();
       }}
-      className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-3xl border-0 bg-white p-6 text-play-ink shadow-xl backdrop:bg-slate-900/30"
+      className="sheet m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto p-6 text-play-ink max-sm:mb-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
     >
       <div className="mb-5 flex items-center justify-between gap-4">
-        <h2 id={titleId} className="font-display text-2xl font-extrabold">
+        <h2
+          id={titleId}
+          className="font-display text-2xl font-extrabold tracking-tight"
+        >
           {title}
         </h2>
-        <button className={secondary} onClick={close} aria-label="Close dialog">
+        <button
+          className={iconButton}
+          onClick={close}
+          aria-label="Close dialog"
+        >
           ✕
         </button>
       </div>
@@ -46,9 +51,24 @@ export function Modal({
     </dialog>
   );
 }
-export function Tag({ children }: { children: ReactNode }) {
+const tones = {
+  slate: "bg-slate-100 text-slate-600",
+  blue: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100",
+  green: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-100",
+  yellow: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-100",
+  coral: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-100",
+};
+export function Tag({
+  children,
+  tone = "slate",
+}: {
+  children: ReactNode;
+  tone?: keyof typeof tones;
+}) {
   return (
-    <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${tones[tone]}`}
+    >
       {children}
     </span>
   );

@@ -232,7 +232,7 @@ export function ToolJoin() {
       )}
       {!g ? (
         <form
-          className="mx-auto max-w-xl space-y-4 rounded-3xl bg-white p-6"
+          className="mx-auto max-w-xl space-y-4 surface p-6"
           onSubmit={async (e) => {
             e.preventDefault();
             if (!invitation) return;

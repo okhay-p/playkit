@@ -95,7 +95,7 @@ export function Table() {
             {c.name}
           </h1>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Tag>Hold’em · no limit</Tag>
+            <Tag tone="green">Hold’em · no limit</Tag>
             <Tag>
               Blinds {number(c.smallBlind)} / {number(c.bigBlind)}
             </Tag>
@@ -154,7 +154,7 @@ export function Table() {
         </section>
       )}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="order-2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:order-1">
+        <section className="order-2 overflow-hidden surface lg:order-1">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
             <h2 className="font-bold">Around the table</h2>
             <span className="text-xs font-bold text-slate-400">
@@ -166,22 +166,22 @@ export function Table() {
           >
             <div className="table-felt" />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="mb-3 flex -space-x-2" aria-hidden="true">
+              <div className="mb-4 flex -space-x-3" aria-hidden="true">
                 <span className="chip coral" />
                 <span className="chip" />
                 <span className="chip green" />
               </div>
-              <span className="mt-1 text-xs font-bold tracking-widest text-green-800">
+              <span className="mt-1 rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-extrabold tracking-[0.18em] text-green-800 ring-1 ring-green-600/10">
                 {between ? "LAST POT" : "POT TOTAL"}
               </span>
-              <span className="font-display text-4xl font-black sm:text-5xl">
+              <span className="mt-1 font-display text-4xl font-black tabular-nums tracking-tight sm:text-5xl">
                 {number(between ? (c.lastResult?.total ?? 0) : potTotal(c))}
               </span>
-              <span className="mt-1 text-sm text-green-800">
+              <span className="mt-1 text-sm font-medium text-green-800">
                 {between ? "Between hands" : STREETS[c.street]}
               </span>
               {c.phase === "showdown" || c.phase === "preview" ? (
-                <Tag>Showdown</Tag>
+                <Tag tone="yellow">Showdown</Tag>
               ) : null}
             </div>
             {c.players.map((p, i) => {
@@ -197,30 +197,26 @@ export function Table() {
                   }}
                 >
                   <div
-                    className={`rounded-2xl border p-3 text-center shadow-sm ${active ? "border-green-400 bg-white ring-4 ring-green-100" : "border-slate-200 bg-white"} ${p.status === "folded" && !between ? "opacity-50" : ""}`}
+                    className="seat-card"
+                    data-active={active}
+                    data-folded={p.status === "folded" && !between}
                   >
-                    <div
-                      className={`mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${active ? "bg-play-green text-white" : "bg-blue-50 text-play-blue"}`}
-                    >
-                      {i + 1}
-                    </div>
+                    <div className="seat-avatar">{i + 1}</div>
                     <div className="truncate text-sm font-bold">{p.name}</div>
-                    <div className="font-display text-xl font-black">
+                    <div className="font-display text-xl font-black tabular-nums">
                       {number(p.stack)}
                     </div>
                     <div className="mt-1 flex min-h-5 items-center justify-center gap-1 text-[10px] font-bold text-slate-500">
                       {c.dealer === p.id && (
-                        <span className="rounded-full bg-play-yellow px-1.5 text-play-ink">
-                          D
-                        </span>
+                        <span className="dealer-disc">D</span>
                       )}
                       {!between && p.id === sb && (
-                        <span className="rounded-full bg-blue-50 px-1.5 text-play-blue">
+                        <span className="rounded-full bg-blue-50 px-1.5 py-px text-play-blue ring-1 ring-inset ring-blue-100">
                           SB
                         </span>
                       )}
                       {!between && p.id === bb && (
-                        <span className="rounded-full bg-blue-50 px-1.5 text-play-blue">
+                        <span className="rounded-full bg-blue-50 px-1.5 py-px text-play-blue ring-1 ring-inset ring-blue-100">
                           BB
                         </span>
                       )}
@@ -242,7 +238,7 @@ export function Table() {
                     </div>
                   </div>
                   {p.contribution > 0 && (
-                    <div className="mx-auto mt-1 w-fit rounded-full bg-white px-2 py-1 text-[10px] font-bold text-slate-500">
+                    <div className="mx-auto mt-1 w-fit rounded-full bg-white px-2 py-1 text-[10px] font-bold text-slate-500 shadow-card">
                       In pot {number(p.contribution)}
                     </div>
                   )}
@@ -250,11 +246,18 @@ export function Table() {
               );
             })}
           </div>
-          <div className="flex justify-center gap-2 border-t border-slate-100 px-4 py-4">
+          <div className="flex justify-center gap-1.5 border-t border-slate-100 bg-slate-50/70 px-4 py-4 sm:gap-2">
             {STREETS.map((s, i) => (
               <span
                 key={s}
-                className={`rounded-full px-2.5 py-1.5 text-xs font-bold ${!between && i === c.street ? "bg-blue-50 text-play-blue" : "text-slate-400"}`}
+                className="street-step"
+                data-state={
+                  !between && i === c.street
+                    ? "now"
+                    : !between && i < c.street
+                      ? "done"
+                      : "idle"
+                }
               >
                 {s}
               </span>
@@ -262,12 +265,16 @@ export function Table() {
           </div>
         </section>
         <aside className="order-1 space-y-4 lg:order-2">
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="surface relative overflow-hidden p-5 pt-6">
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-1.5 bg-[linear-gradient(90deg,#22c55e,#3b82f6_55%,#fbbf24)]"
+            />
             {actions ? (
               <>
                 <div className="mb-4 flex items-center justify-between">
-                  <Tag>Up next</Tag>
-                  <span className="h-2.5 w-2.5 rounded-full bg-play-green" />
+                  <Tag tone="green">Up next</Tag>
+                  <span className="live-dot" aria-hidden="true" />
                 </div>
                 <h2 className="font-display text-3xl font-black">
                   {actions.player.name}’s turn
@@ -277,15 +284,19 @@ export function Table() {
                   left
                 </p>
                 <div className="my-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-blue-50 p-3">
-                    <p className="text-xs text-slate-500">To call</p>
-                    <p className="font-display text-2xl font-black">
+                  <div className="rounded-2xl bg-blue-50 p-3 ring-1 ring-inset ring-blue-100">
+                    <p className="text-xs font-semibold text-blue-700/80">
+                      To call
+                    </p>
+                    <p className="font-display text-2xl font-black tabular-nums">
                       {number(actions.call)}
                     </p>
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">This street</p>
-                    <p className="font-display text-2xl font-black">
+                  <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-100">
+                    <p className="text-xs font-semibold text-slate-500">
+                      This street
+                    </p>
+                    <p className="font-display text-2xl font-black tabular-nums">
                       {number(actions.player.streetBet)}
                     </p>
                   </div>
@@ -377,7 +388,7 @@ export function Table() {
               </>
             ) : c.phase === "awaiting" ? (
               <>
-                <Tag>Betting complete</Tag>
+                <Tag tone="blue">Betting complete</Tag>
                 <h2 className="mt-3 font-display text-2xl font-black">
                   Deal the {STREETS[c.street + 1].toLowerCase()}.
                 </h2>
@@ -395,7 +406,7 @@ export function Table() {
               </>
             ) : (
               <>
-                <Tag>Showdown</Tag>
+                <Tag tone="yellow">Showdown</Tag>
                 <h2 className="mt-3 font-display text-2xl font-black">
                   Time to show.
                 </h2>
@@ -477,7 +488,7 @@ export function Table() {
               <Payout core={c} />
             </section>
           )}
-          <section className="rounded-3xl border border-slate-200 bg-white p-5">
+          <section className="surface p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-bold">Latest at the table</h2>
               <span className="text-play-yellow" aria-hidden="true">

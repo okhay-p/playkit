@@ -13,7 +13,7 @@ export function Join() {
   const [working, setWorking] = useState(false);
   if (sync.role === "guest" && sync.current) return <Table />;
   return (
-    <section className="mx-auto max-w-lg rounded-3xl border border-slate-200 bg-white p-6">
+    <section className="mx-auto max-w-lg surface p-6">
       <h1 className="font-display text-3xl font-black">Take a seat.</h1>
       <p className="mb-5 mt-2 text-slate-500">
         Join the physical table from your phone. The host approves your seat

@@ -94,26 +94,34 @@ function Root() {
       ["between", "settled"].includes(state.current.core.phase));
   return (
     <>
-      <header className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
+      <header className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8 sm:py-5">
         <Link
           to="/"
-          className="flex items-center gap-2"
+          className="group flex items-center gap-2.5"
           aria-label="PlayKit home"
         >
-          <img src="/mark.svg" alt="" className="h-10 w-10" />
+          <img
+            src="/mark.svg"
+            alt=""
+            className="h-10 w-10 rounded-xl shadow-card transition-transform duration-200 group-hover:-rotate-6 group-hover:scale-105"
+          />
           <span className="font-display text-3xl font-black tracking-tight">
             Play<span className="text-play-blue">Kit</span>
           </span>
         </Link>
         <div className="flex items-center gap-3">
-          <Tag>
+          <Tag tone={syncState.role ? "blue" : "slate"}>
             {syncState.role === "guest"
               ? "Joined phone"
               : syncState.role === "host"
                 ? "Host device"
                 : "Shared device"}
           </Tag>
-          <span className="hidden text-sm text-slate-500 sm:block">
+          <span className="hidden items-center gap-2 text-sm text-slate-500 sm:flex">
+            <span
+              aria-hidden="true"
+              className={`h-2 w-2 rounded-full ${online ? "bg-play-green" : "bg-play-yellow-deep"}`}
+            />
             {online
               ? "Together at the table"
               : syncState.role === "guest"
@@ -133,7 +141,7 @@ function Root() {
               {state.failure && (
                 <div
                   role="alert"
-                  className="mb-5 rounded-2xl bg-red-50 p-4 text-red-900"
+                  className="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-900"
                 >
                   {state.failure}
                   {!state.current && (
@@ -151,7 +159,7 @@ function Root() {
           </>
         )}
       </main>
-      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-slate-500 sm:px-8">
+      <footer className="mx-auto mt-6 flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-slate-900/5 px-5 py-6 text-xs text-slate-500 sm:px-8">
         <span>Tools for real-world play. Keep the cards on the table.</span>
         <span role="status">
           {state.busy ||
@@ -175,7 +183,7 @@ function Root() {
         </span>
       </footer>
       {updateReady && (
-        <div className="fixed bottom-4 left-4 right-4 z-20 mx-auto flex max-w-xl items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white p-4 shadow-lg">
+        <div className="fixed bottom-4 left-4 right-4 z-20 mx-auto flex max-w-xl items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white/95 p-4 shadow-lift backdrop-blur-md">
           <p className="text-sm">
             An update is ready.{" "}
             {safeUpdate
@@ -221,115 +229,175 @@ function Root() {
     </>
   );
 }
+const accents = {
+  green: "bg-green-100 text-green-700",
+  blue: "bg-blue-100 text-blue-700",
+  yellow: "bg-amber-100 text-amber-700",
+  coral: "bg-red-100 text-red-600",
+} as const;
+function HeroArt() {
+  return (
+    <div
+      aria-hidden="true"
+      className="relative mx-auto hidden h-72 w-full max-w-md select-none lg:block"
+    >
+      <div className="hero-felt" />
+      <span className="hero-sun" />
+      <span className="hero-block" />
+      <div className="hero-card hero-card-a">
+        <span>A</span>
+        <span>♠</span>
+      </div>
+      <div className="hero-card hero-card-b red">
+        <span>K</span>
+        <span>♥</span>
+      </div>
+      <div className="hero-chips">
+        <span className="chip coral" />
+        <span className="chip" />
+        <span className="chip green" />
+      </div>
+    </div>
+  );
+}
+const lift =
+  "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lift";
 function Home() {
   const { current, recoveryPending } = useSession();
   return (
-    <div className="py-8 sm:py-12">
-      <div className="mb-10 max-w-2xl">
-        <Tag>Less screen. More play.</Tag>
-        <h1 className="mt-5 font-display text-5xl font-black leading-tight tracking-tight sm:text-6xl">
-          Tools for
-          <br />
-          real-world{" "}
-          <span className="underline-play text-play-blue">play.</span>
-        </h1>
-        <p className="mt-5 max-w-lg text-lg leading-relaxed text-slate-500">
-          Gather your people. Deal the cards. We’ll keep track of the chips and
-          whose turn it is.
-        </p>
+    <div className="py-6 sm:py-12">
+      <div className="mb-10 grid items-center gap-8 lg:mb-14 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="max-w-2xl">
+          <Tag tone="yellow">Less screen. More play.</Tag>
+          <h1 className="mt-5 font-display text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl">
+            Tools for
+            <br />
+            real-world{" "}
+            <span className="underline-play text-play-blue">play.</span>
+          </h1>
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-slate-500">
+            Gather your people. Deal the cards. We’ll keep track of the chips
+            and whose turn it is.
+          </p>
+        </div>
+        <HeroArt />
       </div>
-      <div className="grid gap-5 md:grid-cols-2">
-        <section className="relative overflow-hidden rounded-3xl border border-green-100 bg-white p-7 shadow-sm">
-          <div className="mb-5 text-5xl" aria-hidden="true">
+      <div className="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-12">
+        <section
+          className={`surface relative overflow-hidden border-green-100 bg-[linear-gradient(135deg,#f0fdf4_0%,#ffffff_58%)] p-6 sm:p-7 md:col-span-2 lg:col-span-7 ${lift}`}
+        >
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-3 -top-12 select-none font-display text-[12rem] font-black leading-none text-green-500/10"
+          >
             ♠
+          </span>
+          <div className="relative">
+            <div className={`tile mb-5 ${accents.green}`} aria-hidden="true">
+              ♠
+            </div>
+            <Tag tone="green">No-limit Texas Hold’em</Tag>
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
+              A seat for everyone.
+            </h2>
+            <p className="mb-6 mt-3 max-w-sm text-slate-500">
+              Track bets, settle side pots, and keep your cash game moving. One
+              device for the whole table, with optional joined phones.
+            </p>
+            {current ? (
+              <Link
+                to="/poker"
+                className={primary}
+                onClick={() => {
+                  if (recoveryPending) resumeSession();
+                }}
+              >
+                Resume {current.core.name}
+              </Link>
+            ) : (
+              <Link to="/poker/new" className={primary}>
+                Set up a poker table →
+              </Link>
+            )}
           </div>
-          <Tag>No-limit Texas Hold’em</Tag>
-          <h2 className="mt-3 font-display text-3xl font-extrabold">
-            A seat for everyone.
-          </h2>
-          <p className="mb-6 mt-3 max-w-sm text-slate-500">
-            Track bets, settle side pots, and keep your cash game moving. One
-            device for the whole table, with optional joined phones.
-          </p>
-          {current ? (
-            <Link
-              to="/poker"
-              className={`${primary} inline-block`}
-              onClick={() => {
-                if (recoveryPending) resumeSession();
-              }}
-            >
-              Resume {current.core.name}
-            </Link>
-          ) : (
-            <Link to="/poker/new" className={`${primary} inline-block`}>
-              Set up a poker table →
-            </Link>
-          )}
         </section>
-        <section className="rounded-3xl border border-slate-200 bg-slate-50 p-7">
-          <div className="mb-5 text-5xl" aria-hidden="true">
+        <section
+          className={`surface relative overflow-hidden border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_58%)] p-6 sm:p-7 md:col-span-2 lg:col-span-5 ${lift}`}
+        >
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-2 -top-10 select-none font-display text-[11rem] font-black leading-none text-blue-500/10"
+          >
             ♞
+          </span>
+          <div className="relative">
+            <div className={`tile mb-5 ${accents.blue}`} aria-hidden="true">
+              ♞
+            </div>
+            <Tag tone="blue">Shared chess clock</Tag>
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
+              Every second counts.
+            </h2>
+            <p className="mt-3 max-w-sm text-slate-500">
+              A shared chess clock with increments, pause, and quick time
+              controls.
+            </p>
+            <Link to="/chess" className={`${primary} mt-6`}>
+              Open chess clock →
+            </Link>
           </div>
-          <Tag>Shared chess clock</Tag>
-          <h2 className="mt-3 font-display text-3xl font-extrabold">
-            Every second counts.
-          </h2>
-          <p className="mt-3 max-w-sm text-slate-500">
-            A shared chess clock with increments, pause, and quick time
-            controls.
-          </p>
-          <Link to="/chess" className={`${primary} mt-6 inline-block`}>
-            Open chess clock →
-          </Link>
         </section>
-        {[
+        {(
           [
-            "Scorekeeper",
-            "Keep player and team scores, round by round.",
-            "▤",
-            "/scorekeeper",
-          ],
-          [
-            "Tournament manager",
-            "Organize matches and see who plays next.",
-            "⚑",
-            "/tournament",
-          ],
-          [
-            "Undercover",
-            "Similar words. Hidden sides. Find who doesn’t belong.",
-            "◈",
-            "/undercover",
-          ],
-          [
-            "Imposter",
-            "One secret word. Someone has to bluff without it.",
-            "?",
-            "/imposter",
-          ],
-        ].map(([name, description, icon, path]) => (
+            [
+              "Scorekeeper",
+              "Keep player and team scores, round by round.",
+              "▤",
+              "/scorekeeper",
+              "yellow",
+            ],
+            [
+              "Tournament manager",
+              "Organize matches and see who plays next.",
+              "⚑",
+              "/tournament",
+              "coral",
+            ],
+            [
+              "Undercover",
+              "Similar words. Hidden sides. Find who doesn’t belong.",
+              "◈",
+              "/undercover",
+              "blue",
+            ],
+            [
+              "Imposter",
+              "One secret word. Someone has to bluff without it.",
+              "?",
+              "/imposter",
+              "green",
+            ],
+          ] as const
+        ).map(([name, description, icon, path, accent]) => (
           <section
             key={name}
-            className="rounded-3xl border border-slate-200 bg-white p-7"
+            className={`surface flex flex-col p-6 lg:col-span-3 ${lift}`}
           >
-            <div className="mb-5 text-5xl" aria-hidden="true">
+            <div className={`tile mb-5 ${accents[accent]}`} aria-hidden="true">
               {icon}
             </div>
-            <Tag>Shared device · offline</Tag>
-            <h2 className="mt-3 font-display text-3xl font-extrabold">
+            <div>
+              <Tag>Shared device · offline</Tag>
+            </div>
+            <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight">
               {name}
             </h2>
-            <p className="mt-3 text-slate-500">{description}</p>
-            <Link
-              to={
-                path as
-                  "/scorekeeper" | "/tournament" | "/undercover" | "/imposter"
-              }
-              className={`${primary} mt-6 inline-block`}
-            >
-              Open {name} →
-            </Link>
+            <p className="mt-2 flex-1 text-slate-500">{description}</p>
+            <div className="mt-6">
+              <Link to={path} className={`${secondary} px-3.5 text-sm`}>
+                Open {name} →
+              </Link>
+            </div>
           </section>
         ))}
       </div>

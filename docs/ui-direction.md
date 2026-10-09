@@ -19,3 +19,14 @@ The full comparison remains on [prototype/ui-variants](https://github.com/okhay-
 Decision and subsequent implementation tracking: [issue #1](https://github.com/okhay-p/playkit/issues/1).
 
 Keep the throwaway variants on their reference branch. Build the selected layout as production code alongside the real poker engine, persistence, and synchronization milestones.
+
+## Visual system
+
+The Table Club direction is expressed through a small set of shared styles in `src/style.css`. Prefer these over repeating long Tailwind strings in screens.
+
+- **Tokens:** brand colors (`play-blue`, `play-green`, `play-coral`, `play-yellow`, each with a `-deep` shade), `play-ink`, `play-paper`, the `shadow-card` / `shadow-lift` elevations, and the `--ease-snap` easing. Type stays Nunito for display and DM Sans for text.
+- **Controls:** `primary`, `secondary`, `iconButton`, and `field` in `src/ui/primitives.tsx` map to the `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-icon`, and `.field` classes. Buttons press down like a chip edge. These classes live in the `components` layer, so Tailwind utilities (`w-full`, `text-red-600`) still override them.
+- **Surfaces:** `.surface` is the standard white card. `.sheet` is the dialog (a bottom sheet on phones). `Tag` accepts a `tone` of `slate`, `blue`, `green`, `yellow`, or `coral`.
+- **Table:** `.table-felt`, `.chip` (with `.green`, `.coral`, `.yellow`), `.seat` (positioning only), `.seat-card` and `.seat-avatar` (driven by `data-active` and `data-folded`), `.dealer-disc`, and `.street-step` (driven by `data-state`). Keep the `.seat` class: browser tests measure it.
+- **Chess clock:** `.clock-face` is driven by `data-active`, `data-low` (10 seconds or less while running), and `data-expired`, with `.clock-bar` showing time remaining.
+- **Motion:** every animation and transition is disabled under `prefers-reduced-motion`.

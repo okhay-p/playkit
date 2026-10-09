@@ -84,7 +84,7 @@ export function Chess() {
       )}
       {setup ? (
         <form
-          className="rounded-3xl border border-slate-200 bg-white p-6"
+          className="surface p-6"
           onSubmit={async (event) => {
             event.preventDefault();
             const parsed = configSchema.safeParse(draft);
@@ -215,7 +215,10 @@ export function Chess() {
         </form>
       ) : (
         <>
-          <p role="status" className="mb-5 text-center font-bold">
+          <p
+            role="status"
+            className="mx-auto mb-5 w-fit max-w-full rounded-full bg-white px-4 py-2 text-center text-sm font-bold shadow-card ring-1 ring-slate-900/5"
+          >
             {clock.phase === "finished"
               ? `${clock.config.names[clock.active]} ran out of time.`
               : clock.phase === "running"
@@ -241,13 +244,22 @@ export function Chess() {
                 onClick={() => {
                   void act({ type: "move", player });
                 }}
-                className={`min-h-64 touch-manipulation rounded-3xl border-2 p-3 text-center transition-colors sm:p-6 focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-play-blue ${clock.active === player ? "border-play-blue bg-blue-50" : "border-slate-200 bg-white"}`}
+                data-active={clock.active === player}
+                data-low={
+                  clock.phase === "running" &&
+                  clock.active === player &&
+                  clock.remaining[player] <= 10_000
+                }
+                data-expired={
+                  clock.phase === "finished" && clock.active === player
+                }
+                className="clock-face min-h-64 touch-manipulation p-3 pb-6 text-center focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-play-blue sm:p-6 sm:pb-8"
               >
                 <span className="block break-words text-xl font-bold">
                   {clock.config.names[player]}
                 </span>
                 <span
-                  className="my-5 block font-display text-[clamp(1.5rem,8vw,4.5rem)] font-black tabular-nums"
+                  className="my-6 block font-display text-[clamp(1.6rem,9vw,4.75rem)] font-black leading-none tabular-nums tracking-tight"
                   data-testid={`clock-${player}`}
                   id={`chess-time-${player}`}
                 >
@@ -255,7 +267,7 @@ export function Chess() {
                 </span>
                 <span
                   id={`chess-state-${player}`}
-                  className="block text-sm font-bold"
+                  className="block text-xs font-extrabold uppercase tracking-wider"
                 >
                   {clock.phase === "finished" && clock.active === player
                     ? "Time expired"
@@ -266,6 +278,13 @@ export function Chess() {
                         : clock.phase === "ready"
                           ? "Ready"
                           : "Paused"}
+                </span>
+                <span className="clock-bar" aria-hidden="true">
+                  <span
+                    style={{
+                      width: `${Math.min(100, Math.max(0, (clock.remaining[player] / (clock.config.seconds[player] * 1000)) * 100))}%`,
+                    }}
+                  />
                 </span>
               </button>
             ))}

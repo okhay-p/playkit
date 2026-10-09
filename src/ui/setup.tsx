@@ -36,7 +36,7 @@ export function Setup() {
   }
   if (sync.role === "guest" && !current)
     return (
-      <section className="rounded-3xl bg-white p-8">
+      <section className="surface p-8">
         <h1 className="font-display text-3xl font-extrabold">
           Finish joining your table.
         </h1>
@@ -47,7 +47,7 @@ export function Setup() {
     );
   if (current)
     return (
-      <section className="rounded-3xl bg-white p-8">
+      <section className="surface p-8">
         <h1 className="font-display text-3xl font-extrabold">
           Your table is still here.
         </h1>
@@ -61,19 +61,19 @@ export function Setup() {
     );
   return (
     <div className="mx-auto max-w-2xl py-6">
-      <Link to="/" className="text-sm text-slate-500">
+      <Link
+        to="/"
+        className="text-sm text-slate-500 transition-colors hover:text-play-blue"
+      >
         ← Back to the toolkit
       </Link>
-      <h1 className="mt-5 font-display text-4xl font-black">
+      <h1 className="mt-5 font-display text-4xl font-black tracking-tight">
         Bring everyone to the table.
       </h1>
       <p className="mb-7 mt-3 text-slate-500">
         No-limit Texas Hold’em · cash game · whole chips
       </p>
-      <form
-        onSubmit={submit}
-        className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8"
-      >
+      <form onSubmit={submit} className="space-y-6 surface p-6 sm:p-8">
         <label className="block font-bold">
           Table name
           <input
@@ -122,7 +122,7 @@ export function Setup() {
           <div className="space-y-3">
             {players.map((p, i) => (
               <div className="flex items-end gap-2" key={i}>
-                <span className="mb-3 text-sm text-slate-400">{i + 1}</span>
+                <span className="seat-avatar mb-2.5 shrink-0">{i + 1}</span>
                 <label className="min-w-0 flex-1 text-xs font-bold text-slate-500">
                   Player {i + 1}
                   <input
