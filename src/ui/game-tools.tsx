@@ -916,7 +916,7 @@ export function GameTool({ kind }: { kind: Kind }) {
         {g && (
           <div className="flex flex-wrap gap-2">
             <button className={secondary} onClick={() => setPhones(true)}>
-              Phones
+              Invite
             </button>
             {(kind === "scorekeeper" || kind === "tournament") && (
               <button
