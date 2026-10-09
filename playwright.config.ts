@@ -3,6 +3,7 @@ import { availableParallelism } from "node:os";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
+  forbidOnly: !!process.env.CI,
   workers: process.env.CI
     ? 2
     : Math.min(4, Math.max(1, Math.floor(availableParallelism() / 2))),

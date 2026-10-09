@@ -1,22 +1,22 @@
 # Test performance and parallel execution
 
-`npm run check` runs frontend and Worker type checks and all unit tests. `npm run test:e2e` builds the production app once, starts the local signaling Worker, and runs every browser scenario. Browser contexts isolate IndexedDB, and synchronized tests create independent rooms. Keep the production build and service worker: offline tests depend on them.
+`npm run check` runs frontend and Worker type checks and all unit tests. `npm run test:e2e:full` builds the production app once, starts the local signaling Worker, and runs every browser scenario. Browser contexts isolate IndexedDB, and synchronized tests create independent rooms. Keep the production build and service worker: offline tests depend on them.
 
 ## Local execution
 
 ```sh
-# Full coverage: desktop/touch Chromium, Firefox, WebKit
+# Development default: desktop/touch Chromium
 npm run test:e2e
 
-# Faster feedback while implementing; follow with the full suite before release
-npm run test:e2e:quick
+# Full coverage on demand; PRs run this automatically in CI
+npm run test:e2e:full
 
 # Override the total worker count for a resource-constrained or larger machine
-npm run test:e2e -- --workers=2
-npm run test:e2e -- --workers=6
+npm run test:e2e:full -- --workers=2
+npm run test:e2e:full -- --workers=6
 
 # Run only the relevant tool, across all browser projects
-npm run test:e2e -- tests/e2e/chess.spec.ts
+npm run test:e2e:full -- tests/e2e/chess.spec.ts
 
 # Summarize the last run (including failed attempts)
 npm run test:e2e:timings
@@ -24,16 +24,26 @@ npm run test:e2e:timings
 
 Local runs default to half the available logical CPUs, capped at four workers; CI defaults to two. The CLI `--workers` option overrides the total. WebKit retains a separate one-worker cap, so increasing the total accelerates other browsers without starting competing WebKit tests. WebKit is listed first to overlap its longer workload with the other browsers rather than leave it until the end.
 
-Desktop WebKit uses a 1× pixel ratio, matching desktop Chromium and Firefox. The Safari preset's 2× ratio quadruples the number of rasterized pixels; these tests have no pixel-level screenshot assertions. The phone Chromium project retains its device pixel ratio and touch viewport. Use `PLAYKIT_E2E_RETINA=1 npm run test:e2e -- --project=webkit` when validating desktop WebKit at 2×.
+Desktop WebKit uses a 1× pixel ratio, matching desktop Chromium and Firefox. The Safari preset's 2× ratio quadruples the number of rasterized pixels; these tests have no pixel-level screenshot assertions. The phone Chromium project retains its device pixel ratio and touch viewport. Use `PLAYKIT_E2E_RETINA=1 npm run test:e2e:full -- --project=webkit` when validating desktop WebKit at 2×.
 
 Mesa's `LP_NUM_THREADS` can limit each LLVMpipe software-rendering pool on Linux, but fewer threads do not necessarily mean faster rendering. With the original 2× WebKit preset and tracing enabled, the main-branch multi-phone walkthrough passed in 183.8 seconds using the default renderer settings; limiting each renderer to two threads caused a five-minute timeout. The configuration therefore leaves the renderer's default intact. To investigate a different runner, compare identical pixel ratios and trace settings:
 
 ```sh
-LP_NUM_THREADS=2 npm run test:e2e -- --project=webkit
-LP_NUM_THREADS=12 npm run test:e2e -- --project=webkit
+LP_NUM_THREADS=2 npm run test:e2e:full -- --project=webkit
+LP_NUM_THREADS=12 npm run test:e2e:full -- --project=webkit
 ```
 
 The configuration writes `playwright-report/results.json` alongside console output. The timing summary distinguishes suite wall time from summed test duration: overlapping test durations must not be added to estimate wall time. Failure traces and screenshots remain in `test-results/`. For action-level profiling, run a focused scenario with `--trace=on`; tracing can add overhead, so compare identical trace settings.
+
+## Pull requests and main protection
+
+Work on feature branches and open pull requests targeting `main`. The [PR validation workflow](../.github/workflows/ci.yml) runs on every PR revision and can also be started manually. It uses standard Ubuntu runners and Node 22, installs packages with `npm ci`, and cancels superseded runs for the same PR.
+
+The quality job runs frontend/Worker type checks, all unit tests, formatting, shell syntax checks, and the production build. Five independent browser jobs run desktop Chromium, touch Chromium, Firefox, and two WebKit shards. Every browser job starts its own production preview and local signaling Worker; no production credentials are needed. Failure traces, screenshots, and timing reports are uploaded with seven-day retention.
+
+The stable `Quality gate` job runs even when upstream jobs fail or are skipped. It accepts only `success` from both the quality job and the complete browser matrix. Failed, cancelled, or skipped validation blocks the gate. `test.only` is forbidden in CI. The existing browser-independent skips remain intentional: signaling HTTP checks and ten-phone capacity checks run once in desktop Chromium.
+
+An active GitHub branch ruleset for `main` requires a pull request, a successful `Quality gate` from GitHub Actions, an up-to-date branch, and resolved conversations. It blocks force pushes and branch deletion and has no bypass actors. Reviewer approvals are set to zero for solo development; add a reviewer requirement when a second reviewer is available. Configure these repository settings in GitHub; the workflow file alone does not protect the branch. Merge through the PR after the checks pass, rather than pushing a local merge to `main`.
 
 ## More machines
 
@@ -41,11 +51,11 @@ Playwright supports [sharding](https://playwright.dev/docs/test-sharding) indivi
 
 ```sh
 # Each command runs on a different runner or isolated checkout/container.
-npm run test:e2e -- --project=webkit --shard=1/2
-npm run test:e2e -- --project=webkit --shard=2/2
+npm run test:e2e:full -- --project=webkit --shard=1/2
+npm run test:e2e:full -- --project=webkit --shard=2/2
 
 # A separate runner can execute the other browser projects at the same time.
-npm run test:e2e -- --project=desktop --project=phone --project=firefox
+npm run test:e2e:full -- --project=desktop --project=phone --project=firefox
 ```
 
 Alternatively shard the entire browser matrix with `--shard=1/3`, `--shard=2/3`, and `--shard=3/3`. Every runner needs dependencies and its selected Playwright browsers installed, and starts its own app/Worker. Collect each runner's JSON report and failure artifacts separately. These commands do not provision runners or purchase resources.

@@ -45,6 +45,10 @@ Transitive integrations include Workbox for the service worker, Rolldown/esbuild
 
 Still to decide at later milestones: the auth SDK package set, live deployment/origin configuration, and any storage for future account features. Room authorization and temporary metadata retention are documented in [phone sync](phone-sync.md). Advance dependency notice continues to apply.
 
+## Continuous integration tooling
+
+Pull-request validation uses GitHub Actions on standard Ubuntu runners with Node 22. The direct workflow integrations are `actions/checkout` for source checkout, `actions/setup-node` for Node installation and npm caching, and `actions/upload-artifact` for timing reports and failure artifacts. Their announced release versions and immutable commit SHAs are recorded in [the workflow](../.github/workflows/ci.yml). This adds no npm dependency; the existing direct-package list and lockfile remain authoritative.
+
 ## Selected backend direction
 
 Shared-device play needs static app hosting and local storage, with no game backend. Synchronized play needs signaling and TURN availability even though game actions travel between devices. Future user accounts require a trusted authentication service; account data or cloud history would require additional storage according to the eventual feature scope.
