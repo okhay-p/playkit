@@ -267,10 +267,15 @@ test("scorekeeper phones require approval and edit permission, sync, recover, an
       host.getByText("Leading: Alex", { exact: true }),
     ).toBeVisible();
     await host.reload();
+    // A fresh WebRTC negotiation has a 30-second deadline. Allow that deadline
+    // plus host restoration instead of the default eight-second UI wait.
     await expect(
       phone.page.getByText("Connected to host", { exact: true }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 35_000 });
     await phone.page.reload();
+    await expect(
+      phone.page.getByText("Connected to host", { exact: true }),
+    ).toBeVisible({ timeout: 35_000 });
     await expect(
       phone.page.getByText("Leading: Alex", { exact: true }),
     ).toBeVisible();
