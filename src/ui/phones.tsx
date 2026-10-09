@@ -10,6 +10,7 @@ import {
   useSync,
   revokePhone,
 } from "../sync/controller";
+import { InvitationShare } from "./invitation-share";
 import { invitationLink } from "../sync/credentials";
 import { field, Modal, primary, secondary, Tag } from "./primitives";
 export function Phones({ close }: { close: () => void }) {
@@ -31,7 +32,7 @@ export function Phones({ close }: { close: () => void }) {
     }
   }
   return (
-    <Modal title="Phones at the table" close={close}>
+    <Modal title="Invite players" close={close}>
       {error || sync.error ? (
         <p role="alert" className="mb-4 text-red-700">
           {error || sync.error}
@@ -44,15 +45,16 @@ export function Phones({ close }: { close: () => void }) {
       {!sync.host ? (
         <>
           <p className="mb-4 text-slate-500">
-            Share a link, approve each person’s seat, and let them record their
-            own turns. You can still record everyone’s actions on this device.
+            Share a QR code or link, approve each person’s seat, and let them
+            record their own turns. You can still record everyone’s actions on
+            this device.
           </p>
           <button
             className={primary}
             disabled={working || sync.busy || !signalingEndpoint()}
             onClick={() => void perform(enableJoining)}
           >
-            Enable phone joining
+            Enable joining
           </button>
           {!signalingEndpoint() && (
             <p className="mt-3 text-sm text-slate-500">
@@ -68,25 +70,11 @@ export function Phones({ close }: { close: () => void }) {
             Keep this host device open. Share this invitation only with people
             at your table. It expires after 12 hours.
           </p>
-          <label className="block font-bold">
-            Invitation link
-            <input
-              className={`${field} mt-2`}
-              readOnly
-              value={invitationLink(sync.host)}
-              onFocus={(e) => e.target.select()}
-            />
-          </label>
-          <button
-            className={`${secondary} my-3`}
-            onClick={() =>
-              void perform(async () => {
-                await navigator.clipboard.writeText(invitationLink(sync.host!));
-              })
-            }
-          >
-            Copy invitation
-          </button>
+          <InvitationShare
+            link={invitationLink(sync.host)}
+            label="Invitation link"
+            disabled={working}
+          />
           {!sync.connected && (
             <button
               className={`${secondary} ml-2`}
@@ -158,7 +146,7 @@ export function Phones({ close }: { close: () => void }) {
               disabled={working}
               onClick={() => setStop(true)}
             >
-              Close phone joining
+              Close joining
             </button>
           ) : (
             <div className="mt-5 rounded-xl bg-red-50 p-4">
