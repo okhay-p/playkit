@@ -134,6 +134,7 @@ export function Manage({ core: c, close }: { core: Core; close: () => void }) {
             <input
               className={`${field} mt-1`}
               type="number"
+              inputMode="numeric"
               min={1}
               max={1e9}
               step={1}
@@ -179,6 +180,7 @@ export function Manage({ core: c, close }: { core: Core; close: () => void }) {
               <input
                 className={`${field} mt-1`}
                 type="number"
+                inputMode="numeric"
                 min={1}
                 max={1e9}
                 step={1}
