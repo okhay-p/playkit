@@ -44,6 +44,50 @@ export async function observeConnections(page: Page, info: TestInfo) {
       construct(target, args) {
         const pc = Reflect.construct(target, args) as RTCPeerConnection;
         const id = next++;
+        const observeChannel = (channel: RTCDataChannel, source: string) => {
+          const reportChannel = (event: string) =>
+            console.debug(
+              "playkit-rtc:" +
+                JSON.stringify({
+                  id,
+                  source,
+                  event,
+                  channel: channel.readyState,
+                }),
+            );
+          reportChannel("channel-created");
+          for (const event of ["open", "close", "error"])
+            channel.addEventListener(event, () => reportChannel(event));
+          channel.addEventListener("message", (event) => {
+            let type: string | undefined;
+            try {
+              const chunk = JSON.parse(event.data);
+              if (chunk.type === "chunk" && chunk.count === 1)
+                type = JSON.parse(chunk.text).type;
+            } catch {
+              /* Record state even for a multipart or non-JSON message. */
+            }
+            console.debug(
+              "playkit-rtc:" +
+                JSON.stringify({
+                  id,
+                  source,
+                  event: "message",
+                  channel: channel.readyState,
+                  type,
+                }),
+            );
+          });
+        };
+        const createChannel = pc.createDataChannel.bind(pc);
+        pc.createDataChannel = (...args) => {
+          const channel = createChannel(...args);
+          observeChannel(channel, "local");
+          return channel;
+        };
+        pc.addEventListener("datachannel", (event) =>
+          observeChannel(event.channel, "remote"),
+        );
         const report = (event: string) =>
           console.debug(
             "playkit-rtc:" +
