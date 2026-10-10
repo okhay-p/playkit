@@ -7,7 +7,9 @@
 
 # Development and validation
 
-- Work on feature branches and open pull requests targeting `main`. Do not push directly to `main` or bypass its required checks.
+- Never implement changes on `main`. Before starting work, pull the latest `main` and create a new feature branch from it. Open pull requests targeting `main`; do not push directly to `main` or bypass its required checks.
 - During development, run `npm run check`, `npm run format:check`, and relevant Chromium browser tests with `npm run test:e2e`. Use `npm run test:watch` for unit-test feedback.
 - `npm run test:e2e` and its `test:e2e:quick` alias run desktop/touch Chromium only. Use `npm run test:e2e:full` when a full local browser run is explicitly needed.
 - Pull requests to `main` run the full browser matrix in GitHub Actions. Merge only after the required `Quality gate` succeeds on the current PR revision and the branch is up to date with `main`.
+- After implementing changes and opening or updating a PR, wait or snooze until its tests and required checks finish. If any fail, investigate, fix the failures, push the fixes, and wait again until they pass on the latest PR revision.
+- Before handing the PR back to the user, ensure it is ready to merge: all tests and required checks pass, the branch is up to date with `main`, and there are no merge conflicts or other merge blockers.
