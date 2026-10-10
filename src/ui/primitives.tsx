@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 export const primary = "btn btn-primary";
 export const secondary = "btn btn-secondary";
@@ -16,19 +23,60 @@ export function Modal({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const [closing, setClosing] = useState(false);
+  const dismissing = useRef(false);
+  const latestClose = useRef(close);
   useEffect(() => {
-    ref.current?.showModal();
+    latestClose.current = close;
+  }, [close]);
+  const [motion] = useState(
+    () => document.documentElement.dataset.input === "pointer",
+  );
+  function dismiss() {
+    if (dismissing.current) return;
+    dismissing.current = true;
+    if (document.documentElement.dataset.input !== "pointer") {
+      close();
+      return;
+    }
+    setClosing(true);
+  }
+  useEffect(() => {
+    if (!closing) return;
+    // A fallback covers an interrupted transition or a hidden tab.
+    const timeout = window.setTimeout(() => latestClose.current(), 250);
+    return () => window.clearTimeout(timeout);
+  }, [closing]);
+  useLayoutEffect(() => {
+    const dialog = ref.current;
+    const trigger = document.activeElement;
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      if (trigger instanceof HTMLElement && trigger.isConnected)
+        trigger.focus({ preventScroll: true });
+    };
   }, []);
   return (
     <dialog
       ref={ref}
       aria-labelledby={titleId}
+      data-motion={motion}
+      data-closing={closing}
+      onTransitionEnd={(event) => {
+        if (
+          closing &&
+          event.target === event.currentTarget &&
+          event.propertyName === "opacity"
+        )
+          close();
+      }}
       onCancel={(event) => {
         event.preventDefault();
         close();
       }}
       onClick={(event) => {
-        if (event.target === event.currentTarget) close();
+        if (event.target === event.currentTarget) dismiss();
       }}
       className="sheet m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto p-6 text-play-ink max-sm:mb-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]"
     >
@@ -41,7 +89,7 @@ export function Modal({
         </h2>
         <button
           className={iconButton}
-          onClick={close}
+          onClick={dismiss}
           aria-label="Close dialog"
         >
           ✕

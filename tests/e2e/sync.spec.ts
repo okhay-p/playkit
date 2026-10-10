@@ -1,4 +1,14 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import {
+  observeConnections,
+  attachConnections,
+} from "./connection-diagnostics";
+test.beforeEach(async ({ page }, info) => {
+  await observeConnections(page, info);
+});
+test.afterEach(async ({}, info) => {
+  await attachConnections(info);
+});
 async function confirm(page: Page) {
   await page
     .getByRole("dialog")
@@ -37,6 +47,7 @@ async function join(
     hasTouch: true,
   });
   const page = await context.newPage();
+  await observeConnections(page, test.info());
   await page.goto(link);
   await page.getByLabel("Your name").fill(name);
   await page.getByRole("button", { name: "Join table", exact: true }).click();

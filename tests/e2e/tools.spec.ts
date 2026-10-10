@@ -1,4 +1,14 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import {
+  observeConnections,
+  attachConnections,
+} from "./connection-diagnostics";
+test.beforeEach(async ({ page }, info) => {
+  await observeConnections(page, info);
+});
+test.afterEach(async ({}, info) => {
+  await attachConnections(info);
+});
 async function start(page: Page, path: string, title: string) {
   await page.goto(path);
   await page
@@ -274,6 +284,7 @@ async function join(
 ) {
   const context = await browser.newContext();
   const page = await context.newPage();
+  await observeConnections(page, test.info());
   await page.goto(link);
   await page.getByLabel("Your name", { exact: true }).fill(`${player} phone`);
   await page.getByRole("button", { name: "Join game", exact: true }).click();
