@@ -147,6 +147,7 @@ export function Chess() {
                   <input
                     className={`${field} mt-2`}
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={86400}
                     step={1}
@@ -168,6 +169,7 @@ export function Chess() {
               <input
                 className={`${field} mt-2`}
                 type="number"
+                inputMode="numeric"
                 min={0}
                 max={3600}
                 step={1}

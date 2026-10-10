@@ -90,6 +90,7 @@ export function Setup() {
             <input
               className={`${field} mt-2`}
               type="number"
+              inputMode="numeric"
               min={1}
               max={1e9}
               step={1}
@@ -103,6 +104,7 @@ export function Setup() {
             <input
               className={`${field} mt-2`}
               type="number"
+              inputMode="numeric"
               min={small || 1}
               max={1e9}
               step={1}
@@ -146,6 +148,7 @@ export function Setup() {
                     aria-label={`Player ${i + 1} chips`}
                     className={`${field} mt-1 text-play-ink`}
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={1e9}
                     step={1}

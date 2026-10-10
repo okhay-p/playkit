@@ -15,7 +15,7 @@ export default defineConfig({
         short_name: "PlayKit",
         description:
           "Shared-device poker tools and a chess clock for real-world play.",
-        theme_color: "#3b82f6",
+        theme_color: "#fafbf9",
         background_color: "#fafbf9",
         display: "standalone",
         start_url: "/",
