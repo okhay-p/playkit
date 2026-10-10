@@ -112,7 +112,11 @@ export function Chess() {
               <button
                 key={seconds}
                 type="button"
-                className={secondary}
+                className={`${secondary} choice-button`}
+                aria-pressed={
+                  draft.seconds.every((value) => value === seconds) &&
+                  draft.increment === increment
+                }
                 onClick={() =>
                   setDraft({
                     ...draft,

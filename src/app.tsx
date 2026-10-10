@@ -68,6 +68,21 @@ function Root() {
     () => `${updateReady}:${offlineReady}`,
   );
   useEffect(() => {
+    const pointer = () => {
+      document.documentElement.dataset.input = "pointer";
+    };
+    const keyboard = () => {
+      document.documentElement.dataset.input = "keyboard";
+    };
+    document.addEventListener("pointerdown", pointer, true);
+    document.addEventListener("keydown", keyboard, true);
+    return () => {
+      document.removeEventListener("pointerdown", pointer, true);
+      document.removeEventListener("keydown", keyboard, true);
+      delete document.documentElement.dataset.input;
+    };
+  }, []);
+  useEffect(() => {
     void loadSession().then(initializeSync);
     void loadTool("undercover");
     void loadTool("imposter");
@@ -97,13 +112,13 @@ function Root() {
       <header className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8 sm:py-5">
         <Link
           to="/"
-          className="group flex items-center gap-2.5"
+          className="home-link group flex items-center gap-2.5"
           aria-label="PlayKit home"
         >
           <img
             src="/mark.svg"
             alt=""
-            className="h-10 w-10 rounded-xl shadow-card transition-transform duration-200 group-hover:-rotate-6 group-hover:scale-105"
+            className="h-10 w-10 rounded-xl shadow-card home-mark"
           />
           <span className="font-display text-3xl font-black tracking-tight">
             Play<span className="text-play-blue">Kit</span>
@@ -260,8 +275,7 @@ function HeroArt() {
     </div>
   );
 }
-const lift =
-  "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lift";
+const lift = "tool-card hover:-translate-y-0.5 hover:shadow-lift";
 function Home() {
   const { current, recoveryPending } = useSession();
   return (
