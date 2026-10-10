@@ -14,7 +14,9 @@ test("preset selection survives rapid changes and keyboard activation stays imme
   await first.click();
   await expect(first).toHaveAttribute("aria-pressed", "true");
   await expect(second).toHaveAttribute("aria-pressed", "false");
-  await expect(page.getByLabel("Player 1 starting seconds")).toHaveValue("60");
+  await expect(
+    page.getByText("White · 60 seconds", { exact: true }),
+  ).toBeVisible();
   await second.focus();
   await second.press("Enter");
   await expect(second).toHaveAttribute("aria-pressed", "true");

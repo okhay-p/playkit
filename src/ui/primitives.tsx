@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from "react";
 
 export const primary = "btn btn-primary";
@@ -16,10 +17,12 @@ export function Modal({
   title,
   children,
   close,
+  initialFocus,
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
+  initialFocus?: RefObject<HTMLElement | null>;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -51,6 +54,7 @@ export function Modal({
     const dialog = ref.current;
     const trigger = document.activeElement;
     dialog?.showModal();
+    initialFocus?.current?.focus();
     return () => {
       dialog?.close();
       if (trigger instanceof HTMLElement && trigger.isConnected)

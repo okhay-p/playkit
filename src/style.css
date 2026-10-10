@@ -785,3 +785,14 @@ a:focus-visible {
     padding-right: calc(1.5rem + env(safe-area-inset-right, 0px));
   }
 }
+
+/* Roster names wrap even for unbroken text and larger text settings. */
+.participant-name {
+  overflow-wrap: anywhere;
+}
+.participant-edit {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.5rem;
+  margin: -0.5rem -0.5rem 0 0;
+}

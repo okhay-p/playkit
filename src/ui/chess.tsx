@@ -10,6 +10,8 @@ import {
 import { at, configSchema, type Config } from "../chess/engine";
 import { field, Modal, primary, secondary, Tag } from "./primitives";
 import { useWakeLock } from "./use-wake-lock";
+import { ParticipantSetup } from "./participant-setup";
+
 const defaults: Config = {
   names: ["White", "Black"],
   seconds: [300, 300],
@@ -129,44 +131,33 @@ export function Chess() {
               </button>
             ))}
           </div>
-          <div className="grid gap-5 sm:grid-cols-2">
-            {([0, 1] as const).map((player) => (
-              <div key={player} className="space-y-4">
-                <label className="block font-bold">
-                  Player {player + 1} name
-                  <input
-                    className={`${field} mt-2`}
-                    required
-                    maxLength={40}
-                    value={draft.names[player]}
-                    onChange={(e) => {
-                      const names: [string, string] = [...draft.names];
-                      names[player] = e.target.value;
-                      setDraft({ ...draft, names });
-                    }}
-                  />
-                </label>
-                <label className="block font-bold">
-                  Player {player + 1} starting seconds
-                  <input
-                    className={`${field} mt-2`}
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={86400}
-                    step={1}
-                    required
-                    value={draft.seconds[player]}
-                    onChange={(e) => {
-                      const seconds: [number, number] = [...draft.seconds];
-                      seconds[player] = e.target.valueAsNumber;
-                      setDraft({ ...draft, seconds });
-                    }}
-                  />
-                </label>
-              </div>
-            ))}
-          </div>
+          <ParticipantSetup
+            participants={draft.names.map((name, i) => ({
+              id: String(i),
+              name,
+              value: draft.seconds[i]!,
+            }))}
+            onChange={(next) =>
+              setDraft({
+                ...draft,
+                names: [next[0]!.name, next[1]!.name],
+                seconds: [next[0]!.value!, next[1]!.value!],
+              })
+            }
+            max={2}
+            fixed
+            nameLimit={40}
+            uniqueNames={false}
+            numeric={{
+              label: "Starting seconds",
+              min: 1,
+              max: 86400,
+              defaultValue: 300,
+            }}
+            summary={(p, i) =>
+              `${i === 0 ? "White" : "Black"} · ${p.value} seconds`
+            }
+          />
           <div className="my-5 grid gap-5 sm:grid-cols-2">
             <label className="block font-bold">
               Increment per move (seconds)

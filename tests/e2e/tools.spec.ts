@@ -1,3 +1,4 @@
+import { removeParticipant } from "./setup-participants";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
   observeConnections,
@@ -70,7 +71,7 @@ test("knockout handles a bye, advances winners, protects played later rounds, an
   page,
 }) => {
   await page.goto("/tournament");
-  await page.getByLabel("Players or teams").fill("Alex\nJordan\nTaylor");
+  await removeParticipant(page, 4);
   await page.getByLabel("Format").selectOption("knockout");
   await page
     .getByRole("button", { name: "Start Tournament manager", exact: true })

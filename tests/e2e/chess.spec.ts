@@ -1,8 +1,9 @@
+import { editParticipant } from "./setup-participants";
 import { test, expect, type Page } from "@playwright/test";
 async function setup(page: Page) {
   await page.goto("/chess");
-  await page.getByLabel("Player 1 starting seconds").fill("60");
-  await page.getByLabel("Player 2 starting seconds").fill("90");
+  await editParticipant(page, 1, { amount: "60" });
+  await editParticipant(page, 2, { amount: "90" });
   await page.getByLabel("Increment per move (seconds)").fill("2");
   await page.getByLabel("First to move").selectOption("1");
   await page.getByRole("button", { name: "Save clock", exact: true }).click();
@@ -159,7 +160,9 @@ test("chess pauses on hiding or navigation and reloads offline without touching 
   await stopped(page);
   await context.setOffline(false);
   await page.getByRole("button", { name: "New clock", exact: true }).click();
-  await expect(page.getByLabel("Player 2 starting seconds")).toHaveValue("90");
+  await expect(
+    page.getByText("Black · 90 seconds", { exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "3 + 2", exact: true }).click();
   await page.getByRole("button", { name: "Save clock", exact: true }).click();
   await expect(page.getByTestId("clock-0")).toHaveText("3:00");

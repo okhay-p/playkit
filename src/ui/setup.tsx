@@ -3,7 +3,9 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { newSession } from "../storage/session";
 import { useSync } from "../sync/controller";
 import { useSession } from "./use-session";
-import { field, primary, secondary, Tag } from "./primitives";
+import { field, primary } from "./primitives";
+import { createId } from "../id";
+import { ParticipantSetup } from "./participant-setup";
 
 export function Setup() {
   const navigate = useNavigate();
@@ -12,12 +14,17 @@ export function Setup() {
   const [name, setName] = useState("Friday night poker");
   const [small, setSmall] = useState(5);
   const [big, setBig] = useState(10);
-  const [dealer, setDealer] = useState(0);
-  const [players, setPlayers] = useState(
+  const [players, setPlayers] = useState(() =>
     ["Alex", "Jordan", "Taylor", "Casey"].map((name) => ({
+      id: createId(),
       name,
-      stack: 1000,
+      value: 1000,
     })),
+  );
+  const [dealer, setDealer] = useState(players[0]!.id);
+  const dealerIndex = Math.max(
+    0,
+    players.findIndex((p) => p.id === dealer),
   );
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -26,8 +33,8 @@ export function Setup() {
         name,
         smallBlind: small,
         bigBlind: big,
-        dealerIndex: dealer,
-        players,
+        dealerIndex,
+        players: players.map((p) => ({ name: p.name, stack: p.value! })),
       });
       await navigate({ to: "/poker" });
     } catch {
@@ -114,93 +121,32 @@ export function Setup() {
             />
           </label>
         </div>
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-xl font-extrabold">
-              Seats, clockwise
-            </h2>
-            <Tag>{players.length} / 10</Tag>
-          </div>
-          <div className="space-y-3">
-            {players.map((p, i) => (
-              <div className="flex items-end gap-2" key={i}>
-                <span className="seat-avatar mb-2.5 shrink-0">{i + 1}</span>
-                <label className="min-w-0 flex-1 text-xs font-bold text-slate-500">
-                  Player {i + 1}
-                  <input
-                    aria-label={`Player ${i + 1} name`}
-                    className={`${field} mt-1 text-play-ink`}
-                    value={p.name}
-                    required
-                    maxLength={24}
-                    onChange={(e) =>
-                      setPlayers(
-                        players.map((p, j) =>
-                          j === i ? { ...p, name: e.target.value } : p,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-                <label className="w-28 text-xs font-bold text-slate-500">
-                  Starting chips
-                  <input
-                    aria-label={`Player ${i + 1} chips`}
-                    className={`${field} mt-1 text-play-ink`}
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={1e9}
-                    step={1}
-                    value={p.stack}
-                    required
-                    onChange={(e) =>
-                      setPlayers(
-                        players.map((p, j) =>
-                          j === i ? { ...p, stack: Number(e.target.value) } : p,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-                <button
-                  className={secondary}
-                  type="button"
-                  aria-label={`Remove seat ${i + 1}`}
-                  disabled={players.length <= 2}
-                  onClick={() => {
-                    setPlayers(players.filter((_, j) => j !== i));
-                    setDealer(0);
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            className={`${secondary} mt-3 w-full`}
-            disabled={players.length >= 10}
-            onClick={() =>
-              setPlayers([
-                ...players,
-                { name: `Player ${players.length + 1}`, stack: 1000 },
-              ])
-            }
-          >
-            + Add a seat
-          </button>
-        </div>
+        <ParticipantSetup
+          title="Seats, clockwise"
+          noun="seat"
+          participants={players}
+          onChange={(next) =>
+            setPlayers(next.map((p) => ({ ...p, value: p.value! })))
+          }
+          numeric={{
+            label: "Starting chips",
+            min: 1,
+            max: 1e9,
+            defaultValue: 1000,
+          }}
+          summary={(p, i) =>
+            `${p.value!.toLocaleString()} chips${i === dealerIndex ? " · First dealer" : ""}`
+          }
+        />
         <label className="block font-bold">
           First dealer
           <select
             className={`${field} mt-2`}
-            value={dealer}
-            onChange={(e) => setDealer(Number(e.target.value))}
+            value={players[dealerIndex]!.id}
+            onChange={(e) => setDealer(e.target.value)}
           >
             {players.map((p, i) => (
-              <option key={i} value={i}>
+              <option key={p.id} value={p.id}>
                 {p.name || `Seat ${i + 1}`}
               </option>
             ))}
