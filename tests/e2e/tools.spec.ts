@@ -277,7 +277,10 @@ async function join(
   await page.goto(link);
   await page.getByLabel("Your name", { exact: true }).fill(`${player} phone`);
   await page.getByRole("button", { name: "Join game", exact: true }).click();
-  const picker = page.getByLabel("Choose your player", { exact: true });
+  const picker = page.getByRole("combobox", {
+    name: "Choose your player",
+    exact: true,
+  });
   // The roster arrives over WebRTC, whose negotiation deadline is 30 seconds.
   // Allow that deadline plus rendering rather than the 15-second action timeout.
   await expect(picker).toBeVisible({ timeout: 35_000 });
