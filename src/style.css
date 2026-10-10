@@ -1,7 +1,13 @@
 @import "tailwindcss";
 
 /* Hover is a mouse affordance; touch keeps the immediate :active feedback. */
-@custom-variant hover (@media (hover: hover) and (pointer: fine));
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
 
 @theme {
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
