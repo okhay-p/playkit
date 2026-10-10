@@ -30,7 +30,7 @@ export function Modal({
       onClick={(event) => {
         if (event.target === event.currentTarget) close();
       }}
-      className="sheet m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto p-6 text-play-ink max-sm:mb-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+      className="sheet m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto p-6 text-play-ink max-sm:mb-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]"
     >
       <div className="mb-5 flex items-center justify-between gap-4">
         <h2

@@ -44,6 +44,7 @@ export function Raise({ core, close }: { core: Core; close: () => void }) {
             autoFocus
             className={`${field} mt-2`}
             type="number"
+            inputMode="numeric"
             step={1}
             min={Math.min(a.minimum, a.maximum)}
             max={a.maximum}

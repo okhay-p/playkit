@@ -183,7 +183,7 @@ function Root() {
         </span>
       </footer>
       {updateReady && (
-        <div className="fixed bottom-4 left-4 right-4 z-20 mx-auto flex max-w-xl items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white/95 p-4 shadow-lift backdrop-blur-md">
+        <div className="update-prompt fixed bottom-4 left-4 right-4 z-20 mx-auto flex max-w-xl items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white/95 p-4 shadow-lift backdrop-blur-md">
           <p className="text-sm">
             An update is ready.{" "}
             {safeUpdate

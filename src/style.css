@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Hover is a mouse affordance; touch keeps the immediate :active feedback. */
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
 @theme {
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Nunito", ui-rounded, "DM Sans", system-ui, sans-serif;
@@ -34,7 +43,17 @@
 }
 
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    /* An accidental refresh can interrupt a shared game. */
+    overscroll-behavior: none;
+  }
   body {
+    overscroll-behavior: none;
+    /* Paint edge to edge while keeping content clear of notches in landscape too. */
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+      env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
     min-height: 100dvh;
     background-color: var(--color-play-paper);
     background-image:
@@ -71,11 +90,31 @@
   }
 }
 
+/* Controls respond without double-tap delay or long-press text selection. */
 button,
 a,
+[role="button"] {
+  touch-action: manipulation;
+}
+button,
+[role="button"],
+a.btn,
+a[aria-label="PlayKit home"] {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+/* Plain controls also need feedback after removing the browser tap highlight. */
+button:not(.btn):not(.clock-face):not(:disabled):active,
+a:not(.btn):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  opacity: 0.7;
+}
 input,
+textarea,
 select {
-  -webkit-tap-highlight-color: transparent;
+  /* Keep iOS focus from zooming; pinch zoom remains available. */
+  font-size: 1rem;
 }
 button {
   cursor: pointer;
@@ -131,13 +170,15 @@ a:focus-visible {
       0 3px 0 var(--color-play-blue-deep),
       0 10px 18px -8px rgb(37 99 235 / 0.55);
   }
-  .btn-primary:hover:not(:disabled) {
-    filter: brightness(1.05);
-    transform: translateY(-1px);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.3),
-      0 4px 0 var(--color-play-blue-deep),
-      0 14px 22px -10px rgb(37 99 235 / 0.6);
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.3),
+        0 4px 0 var(--color-play-blue-deep),
+        0 14px 22px -10px rgb(37 99 235 / 0.6);
+    }
   }
   .btn-primary:active:not(:disabled) {
     transform: translateY(3px);
@@ -155,10 +196,12 @@ a:focus-visible {
       0 2px 0 rgb(15 23 42 / 0.06),
       0 1px 2px rgb(15 23 42 / 0.04);
   }
-  .btn-secondary:hover:not(:disabled) {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    transform: translateY(-1px);
+  @media (hover: hover) and (pointer: fine) {
+    .btn-secondary:hover:not(:disabled) {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
   }
   .btn-secondary:active:not(:disabled) {
     transform: translateY(2px);
@@ -190,8 +233,10 @@ a:focus-visible {
       border-color 150ms,
       box-shadow 150ms;
   }
-  .field:hover:not(:disabled) {
-    border-color: #cbd5e1;
+  @media (hover: hover) and (pointer: fine) {
+    .field:hover:not(:disabled) {
+      border-color: #cbd5e1;
+    }
   }
   .field:focus {
     border-color: var(--color-play-blue);
@@ -212,6 +257,8 @@ a:focus-visible {
 
   /* Dialogs: a centered card on large screens, a bottom sheet on phones. */
   .sheet {
+    /* Scrolling a long sheet must not move the game behind it. */
+    overscroll-behavior: contain;
     background: #fff;
     border: 0;
     border-radius: 1.75rem;
@@ -680,5 +727,18 @@ a:focus-visible {
     position: static;
     transform: none;
     width: auto;
+  }
+}
+
+/* A fixed update prompt is outside the document's safe-area padding. */
+.update-prompt {
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  left: calc(1rem + env(safe-area-inset-left, 0px));
+  right: calc(1rem + env(safe-area-inset-right, 0px));
+}
+@media (max-width: 639px) {
+  .sheet {
+    padding-left: calc(1.5rem + env(safe-area-inset-left, 0px));
+    padding-right: calc(1.5rem + env(safe-area-inset-right, 0px));
   }
 }
