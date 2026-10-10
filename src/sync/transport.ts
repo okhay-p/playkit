@@ -319,10 +319,14 @@ export class PeerTransport<W = Wire> {
   }
   private bind(id: string, peer: Peer, channel: RTCDataChannel) {
     peer.channel = channel;
-    channel.onopen = () => {
+    let opened = false;
+    const notifyOpen = () => {
+      if (opened || peer.closed) return;
+      opened = true;
       clearTimeout(peer.negotiationTimer);
       this.options.open(id);
     };
+    channel.onopen = notifyOpen;
     channel.onclose = () => {
       if (!peer.closed) this.options.close(id);
     };
@@ -364,6 +368,9 @@ export class PeerTransport<W = Wire> {
           this.options.status(false, "An invalid phone message was rejected.");
         });
     };
+    // A remotely created channel can already be open when datachannel fires.
+    // Register message handling first, then start the application handshake.
+    if (channel.readyState === "open") notifyOpen();
   }
   send(id: string, message: W) {
     const peer = this.peers.get(id);

@@ -29,6 +29,7 @@ const candidate = {
 };
 class Connection {
   static instances: Connection[] = [];
+  ondatachannel?: (event: { channel: RTCDataChannel }) => void;
   onicecandidate?: (event: {
     candidate: { toJSON: () => typeof candidate };
   }) => void;
@@ -67,7 +68,7 @@ afterEach(() => {
   Connection.instances = [];
   vi.unstubAllGlobals();
 });
-async function start(role: "host" | "guest") {
+async function start(role: "host" | "guest", onOpen = (_peer: string) => {}) {
   vi.stubGlobal("window", { addEventListener() {}, removeEventListener() {} });
   vi.stubGlobal("navigator", { onLine: true });
   vi.stubGlobal(
@@ -84,7 +85,7 @@ async function start(role: "host" | "guest") {
     role,
     secret: "secret",
     peer: "local",
-    open() {},
+    open: onOpen,
     message() {},
     close() {},
     status() {},
@@ -134,3 +135,38 @@ it("a stopped negotiation cannot publish queued candidates or its description", 
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(socket.sent).toEqual([]);
 });
+
+it.each(["open", "connecting"] as const)(
+  "a remote channel arriving %s starts its handshake exactly once",
+  async (initialState) => {
+    const onOpen = vi.fn();
+    const socket = await start("guest", onOpen);
+    socket.receive({
+      type: "signal",
+      from: "remote",
+      description: { type: "offer", sdp: "remote offer" },
+    });
+    await vi.waitFor(() =>
+      expect(Connection.instances[0]?.finishDescription).toBeDefined(),
+    );
+    Connection.instances[0].finishDescription!();
+    await vi.waitFor(() => expect(socket.sent).toHaveLength(2));
+    const channel = {
+      readyState: initialState as RTCDataChannelState,
+      onopen: undefined as (() => void) | undefined,
+      onmessage: undefined as ((event: MessageEvent) => void) | undefined,
+      close() {
+        this.readyState = "closed";
+      },
+    };
+    Connection.instances[0].ondatachannel!({
+      channel: channel as unknown as RTCDataChannel,
+    });
+    expect(channel.onmessage).toBeDefined();
+    expect(onOpen).toHaveBeenCalledTimes(initialState === "open" ? 1 : 0);
+    channel.readyState = "open";
+    channel.onopen!();
+    channel.onopen!();
+    expect(onOpen).toHaveBeenCalledExactlyOnceWith("remote");
+  },
+);

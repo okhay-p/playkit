@@ -1,3 +1,8 @@
+import {
+  addSeat,
+  editParticipant,
+  removeParticipant,
+} from "./setup-participants";
 import { test, expect, type Page } from "@playwright/test";
 
 async function confirm(page: Page) {
@@ -11,9 +16,7 @@ async function setup(page: Page, stacks?: number[]) {
   await page.goto("/poker/new");
   if (stacks)
     for (let i = 0; i < stacks.length; i++)
-      await page
-        .getByLabel(`Player ${i + 1} chips`, { exact: true })
-        .fill(String(stacks[i]));
+      await editParticipant(page, i + 1, { amount: String(stacks[i]) });
   await page.getByRole("button", { name: "Create table", exact: true }).click();
   await page.getByRole("button", { name: "Start hand", exact: true }).click();
   await confirm(page);
@@ -303,10 +306,7 @@ test("cached app restores and plays while offline, with no horizontal overflow",
 });
 test("ten-player setup and table fit the viewport", async ({ page }) => {
   await page.goto("/poker/new");
-  for (let i = 0; i < 6; i++)
-    await page
-      .getByRole("button", { name: "+ Add a seat", exact: true })
-      .click();
+  for (let i = 0; i < 6; i++) await addSeat(page, i + 5);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -367,12 +367,8 @@ test("heads-up betting, raises, fold payout, and pre-hand recovery work end to e
   page,
 }) => {
   await page.goto("/poker/new");
-  await page
-    .getByRole("button", { name: "Remove seat 4", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Remove seat 3", exact: true })
-    .click();
+  await removeParticipant(page, 4);
+  await removeParticipant(page, 3);
   await page.getByRole("button", { name: "Create table", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Start hand", exact: true }),
@@ -432,14 +428,10 @@ test("short all-in blind runs out, settles, rebuys, and starts another hand", as
   page,
 }) => {
   await page.goto("/poker/new");
-  await page
-    .getByRole("button", { name: "Remove seat 4", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Remove seat 3", exact: true })
-    .click();
-  await page.getByLabel("Player 1 chips", { exact: true }).fill("100");
-  await page.getByLabel("Player 2 chips", { exact: true }).fill("3");
+  await removeParticipant(page, 4);
+  await removeParticipant(page, 3);
+  await editParticipant(page, 1, { amount: "100" });
+  await editParticipant(page, 2, { amount: "3" });
   await page.getByRole("button", { name: "Create table", exact: true }).click();
   await page.getByRole("button", { name: "Start hand", exact: true }).click();
   await confirm(page);

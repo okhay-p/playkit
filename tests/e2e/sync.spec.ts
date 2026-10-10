@@ -1,3 +1,4 @@
+import { addSeat } from "./setup-participants";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
   observeConnections,
@@ -21,10 +22,7 @@ async function action(page: Page, name: string) {
 }
 async function enable(host: Page, seats = 4) {
   await host.goto("/poker/new");
-  for (let i = 4; i < seats; i++)
-    await host
-      .getByRole("button", { name: "+ Add a seat", exact: true })
-      .click();
+  for (let i = 4; i < seats; i++) await addSeat(host, i + 1);
   await host.getByRole("button", { name: "Create table", exact: true }).click();
   await host.getByRole("button", { name: "Invite", exact: true }).click();
   await host

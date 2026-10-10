@@ -31,6 +31,9 @@ import {
   type WordCategory,
 } from "../games/word-packs";
 
+import { createId } from "../id";
+import { ParticipantSetup, type SetupParticipant } from "./participant-setup";
+
 export const toolTitles: Record<Kind, string> = {
   scorekeeper: "Scorekeeper",
   tournament: "Tournament manager",
@@ -46,9 +49,11 @@ function ToolSetup({
   previous?: Game;
   onCreate: (game: Game) => Promise<void>;
 }) {
-  const [names, setNames] = useState(
-    previous?.players.map((p) => p.name).join("\n") ||
-      "Alex\nJordan\nTaylor\nCasey",
+  const [participants, setParticipants] = useState<SetupParticipant[]>(() =>
+    (
+      previous?.players ??
+      ["Alex", "Jordan", "Taylor", "Casey"].map((name) => ({ name }))
+    ).map((p) => ({ id: createId(), name: p.name })),
   );
   const [title, setTitle] = useState(previous?.title || toolTitles[kind]);
   const [direction, setDirection] = useState<"high" | "low">("high"),
@@ -71,7 +76,7 @@ function ToolSetup({
           await onCreate(
             createGame(
               kind,
-              names.split("\n").filter((n) => n.trim()),
+              participants.map((p) => p.name),
               {
                 title,
                 direction,
@@ -102,19 +107,21 @@ function ToolSetup({
           onChange={(e) => setTitle(e.target.value)}
         />
       </label>
-      <label className="block font-bold">
-        Players or teams
-        <textarea
-          className={`${field} mt-2`}
-          rows={5}
-          value={names}
-          onChange={(e) => setNames(e.target.value)}
-          required
-        />
-      </label>
-      <p className="text-sm text-slate-500">
-        One name per line. Up to 10 players or teams.
-      </p>
+      <ParticipantSetup
+        title={
+          kind === "scorekeeper" || kind === "tournament"
+            ? "Players or teams"
+            : "Players"
+        }
+        noun={
+          kind === "scorekeeper" || kind === "tournament"
+            ? "player or team"
+            : "player"
+        }
+        participants={participants}
+        onChange={setParticipants}
+        min={kind === "undercover" || kind === "imposter" ? 3 : 2}
+      />
       {kind === "scorekeeper" && (
         <>
           <label className="block font-bold">
