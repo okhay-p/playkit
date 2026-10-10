@@ -30,10 +30,13 @@ const chunkSchema = z.object({
   count: z.number().int().min(1).max(700),
   text: z.string().max(12000),
 });
+type Candidate = NonNullable<Extract<Signal, { type: "signal" }>["candidate"]>;
 type Peer = {
   pc: RTCPeerConnection;
   channel?: RTCDataChannel;
   candidates: RTCIceCandidateInit[];
+  localCandidates: Candidate[];
+  described: boolean;
   incoming: string[];
   count: number;
   outgoing: Promise<void>;
@@ -217,6 +220,8 @@ export class PeerTransport<W = Wire> {
     const peer: Peer = {
       pc,
       candidates: [],
+      localCandidates: [],
+      described: false,
       incoming: [],
       count: 0,
       outgoing: Promise.resolve(),
@@ -237,15 +242,12 @@ export class PeerTransport<W = Wire> {
     }, 30_000);
     this.peers.set(id, peer);
     pc.onicecandidate = (event) => {
-      if (event.candidate)
-        this.signal({
-          type: "signal",
-          to: id,
-          candidate: event.candidate.toJSON() as Extract<
-            Signal,
-            { type: "signal" }
-          >["candidate"],
-        });
+      if (!event.candidate || peer.closed) return;
+      const candidate = event.candidate.toJSON() as Candidate;
+      // ICE gathering may start before setLocalDescription resolves. A guest
+      // cannot apply candidates until the offer has created its connection.
+      if (!peer.described) peer.localCandidates.push(candidate);
+      else this.signal({ type: "signal", to: id, candidate });
     };
     pc.onconnectionstatechange = () => {
       if (peer.closed) return;
@@ -277,12 +279,20 @@ export class PeerTransport<W = Wire> {
       peer.pc.createDataChannel("playkit-v1", { ordered: true }),
     );
     await peer.pc.setLocalDescription(await peer.pc.createOffer());
+    this.describe(id, peer, "offer");
+  }
+  private describe(id: string, peer: Peer, type: "offer" | "answer") {
+    if (peer.closed) return;
     this.signal({
       type: "signal",
       to: id,
-      description: { type: "offer", sdp: peer.pc.localDescription!.sdp },
+      description: { type, sdp: peer.pc.localDescription!.sdp },
     });
+    peer.described = true;
+    for (const candidate of peer.localCandidates.splice(0))
+      this.signal({ type: "signal", to: id, candidate });
   }
+
   private async receiveSignal(
     data: Extract<z.infer<typeof signalingMessage>, { type: "signal" }>,
   ) {
@@ -298,11 +308,7 @@ export class PeerTransport<W = Wire> {
         await peer.pc.addIceCandidate(candidate);
       if (data.description.type === "offer") {
         await peer.pc.setLocalDescription(await peer.pc.createAnswer());
-        this.signal({
-          type: "signal",
-          to: data.from,
-          description: { type: "answer", sdp: peer.pc.localDescription!.sdp },
-        });
+        this.describe(data.from, peer, "answer");
       }
     }
     if (data.candidate) {
