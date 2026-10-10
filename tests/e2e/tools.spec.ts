@@ -206,6 +206,58 @@ test("Imposter receives no word and can win with a final guess", async ({
   ).toBeVisible();
   await expect(page.getByText(/Civilian word:/)).toBeVisible();
 });
+for (const kind of ["undercover", "imposter"] as const) {
+  test(`${kind} selects categories and validates a custom CSV upload before dealing`, async ({
+    page,
+  }) => {
+    await page.goto(`/${kind}`);
+    const category = page.getByLabel("Word category");
+    await expect(category).toHaveValue("all");
+    await category.selectOption("food");
+    await expect(category).toHaveValue("food");
+    await category.selectOption("custom");
+    await page
+      .getByRole("button", {
+        name: `Start ${kind === "undercover" ? "Undercover" : "Imposter"}`,
+        exact: true,
+      })
+      .click();
+    await expect(page.getByRole("alert")).toContainText(
+      kind === "undercover" ? "even number" : "at least one",
+    );
+    const words = kind === "undercover" ? "Dragon,Phoenix" : "Dragon";
+    await page
+      .getByLabel("Upload word list (.csv or .txt)", { exact: true })
+      .setInputFiles({
+        name: "words.csv",
+        mimeType: "text/csv",
+        buffer: Buffer.from(words),
+      });
+    await expect(
+      page.getByRole("textbox", { name: "Custom words", exact: true }),
+    ).toHaveValue(words);
+    await page
+      .getByRole("button", {
+        name: `Start ${kind === "undercover" ? "Undercover" : "Imposter"}`,
+        exact: true,
+      })
+      .click();
+    await page
+      .getByRole("button", { name: "Reveal my card", exact: true })
+      .click();
+    if (kind === "undercover") {
+      await expect(page.getByText(/^(Dragon|Phoenix)$/)).toBeVisible();
+    } else if (
+      await page.getByText("You are the imposter", { exact: true }).isVisible()
+    ) {
+      await expect(page.getByText("Dragon", { exact: true })).toHaveCount(0);
+    } else {
+      await expect(page.getByText("Dragon", { exact: true })).toBeVisible();
+    }
+    await page.reload();
+    await expect(page.getByText(/^(Dragon|Phoenix)$/)).toHaveCount(0);
+  });
+}
 async function openJoining(host: Page) {
   await host.getByRole("button", { name: "Invite", exact: true }).click();
   await host
