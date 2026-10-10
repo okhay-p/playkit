@@ -53,6 +53,9 @@ export async function observeConnections(page: Page, info: TestInfo) {
                   source,
                   event,
                   channel: channel.readyState,
+                  dataChannelHandler: typeof pc.ondatachannel === "function",
+                  openHandler: typeof channel.onopen === "function",
+                  messageHandler: typeof channel.onmessage === "function",
                 }),
             );
           reportChannel("channel-created");
