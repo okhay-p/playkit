@@ -46,6 +46,8 @@ type Peer = {
   messages: number;
   window: number;
   negotiationTimer?: ReturnType<typeof setTimeout>;
+  handshakeTimer?: ReturnType<typeof setInterval>;
+  received: boolean;
 };
 type Options<W> = {
   endpoint: string;
@@ -230,9 +232,14 @@ export class PeerTransport<W = Wire> {
       suspended: false,
       messages: 0,
       window: Date.now(),
+      received: false,
     };
     peer.negotiationTimer = setTimeout(() => {
-      if (peer.channel?.readyState !== "open" && !peer.closed) {
+      if (
+        !peer.closed &&
+        (peer.channel?.readyState !== "open" ||
+          (this.options.role === "guest" && !peer.received))
+      ) {
         this.drop(id);
         this.options.status(
           false,
@@ -323,7 +330,13 @@ export class PeerTransport<W = Wire> {
     const notifyOpen = () => {
       if (opened || peer.closed) return;
       opened = true;
-      clearTimeout(peer.negotiationTimer);
+      if (this.options.role === "host" || peer.received)
+        clearTimeout(peer.negotiationTimer);
+      else
+        peer.handshakeTimer = setInterval(() => {
+          if (!peer.closed && channel.readyState === "open")
+            this.options.open(id);
+        }, 1000);
       this.options.open(id);
     };
     channel.onopen = notifyOpen;
@@ -355,12 +368,13 @@ export class PeerTransport<W = Wire> {
             }
             if (++peer.messages > 120)
               throw new Error("Too many peer messages.");
-            await this.options.message(
-              id,
-              this.options.parse
-                ? this.options.parse(JSON.parse(text))
-                : (wireSchema.parse(JSON.parse(text)) as W),
-            );
+            const message = this.options.parse
+              ? this.options.parse(JSON.parse(text))
+              : (wireSchema.parse(JSON.parse(text)) as W);
+            peer.received = true;
+            clearInterval(peer.handshakeTimer);
+            clearTimeout(peer.negotiationTimer);
+            await this.options.message(id, message);
           }
         })
         .catch(() => {
@@ -370,6 +384,8 @@ export class PeerTransport<W = Wire> {
     };
     // A remotely created channel can already be open when datachannel fires.
     // Register message handling first, then start the application handshake.
+    // An open channel alone does not prove the host received the guest hello:
+    // retry until a valid reply, within the original negotiation deadline.
     if (channel.readyState === "open") notifyOpen();
   }
   send(id: string, message: W) {
@@ -424,6 +440,7 @@ export class PeerTransport<W = Wire> {
     this.peers.delete(id);
     peer.closed = true;
     clearTimeout(peer.negotiationTimer);
+    clearInterval(peer.handshakeTimer);
     peer.channel?.close();
     peer.pc.close();
     this.options.close(id);

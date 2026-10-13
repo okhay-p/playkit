@@ -40,7 +40,7 @@ Every accepted action is atomically saved to the existing IndexedDB session befo
 
 ## Recovery and limits
 
-The host restores its game, room credentials, and seat bindings after reload. Its game stays paused until explicit **Resume game**. Phones preserve their last-known display, freeze submissions when disconnected/offline, and automatically retry signaling with bounded backoff. The **Reconnect to host** control starts fresh negotiation. A successful signaling connection alone does not enable actions: a validated authoritative snapshot does.
+The host restores its game, room credentials, and seat bindings after reload. Its game stays paused until explicit **Resume game**. Phones preserve their last-known display, freeze submissions when disconnected/offline, and automatically retry signaling with bounded backoff. The **Reconnect to host** control starts fresh negotiation. A successful signaling connection alone does not enable actions: a validated authoritative snapshot does. An open data channel retries the guest hello every second until a valid host reply arrives, bounded by the 30-second connection deadline. This prevents an initial handshake lost during channel opening from leaving a phone waiting indefinitely.
 
 A removed/revoked seat needs approval again. Closing joining clears connected phone copies and their credentials while preserving the shared host game. Ending the table closes joining too. Disconnected copies cannot be remotely erased; invitations expire and a reconnect then clears the expired joined copy. Room expiry does not erase the locally saved host game.
 

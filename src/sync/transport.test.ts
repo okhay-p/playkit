@@ -67,6 +67,7 @@ afterEach(() => {
   Socket.instances = [];
   Connection.instances = [];
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 async function start(role: "host" | "guest", onOpen = (_peer: string) => {}) {
   vi.stubGlobal("window", { addEventListener() {}, removeEventListener() {} });
@@ -170,3 +171,78 @@ it.each(["open", "connecting"] as const)(
     expect(onOpen).toHaveBeenCalledExactlyOnceWith("remote");
   },
 );
+
+it("retries a lost guest handshake until the host responds, then stops", async () => {
+  const hello = {
+    type: "hello" as const,
+    version: 1 as const,
+    credential: "a".repeat(43),
+    name: "Oakkar",
+  };
+  const socket = await start("guest", () => transport!.sendHost(hello));
+  socket.receive({
+    type: "signal",
+    from: "remote",
+    description: { type: "offer", sdp: "remote offer" },
+  });
+  await vi.waitFor(() =>
+    expect(Connection.instances[0]?.finishDescription).toBeDefined(),
+  );
+  Connection.instances[0].finishDescription!();
+  await vi.waitFor(() => expect(socket.sent).toHaveLength(2));
+  vi.useFakeTimers();
+  let attempts = 0;
+  const delivered: unknown[] = [];
+  const channel = {
+    readyState: "open",
+    bufferedAmount: 0,
+    onmessage: undefined as ((event: MessageEvent) => void) | undefined,
+    send(data: string) {
+      // Reproduce CI's open channel with no hello received by the host.
+      if (++attempts > 1) delivered.push(JSON.parse(JSON.parse(data).text));
+    },
+    close() {},
+  };
+  Connection.instances[0].ondatachannel!({
+    channel: channel as unknown as RTCDataChannel,
+  });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(attempts).toBe(1);
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(delivered).toEqual([hello]);
+  channel.onmessage!({
+    data: JSON.stringify({
+      type: "chunk",
+      index: 0,
+      count: 1,
+      text: JSON.stringify({ type: "welcome", version: 1, seats: [] }),
+    }),
+  } as MessageEvent);
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(attempts).toBe(2);
+});
+
+it("stops handshake retries when an open channel never receives a host reply", async () => {
+  vi.useFakeTimers();
+  const onOpen = vi.fn();
+  const socket = await start("guest", onOpen);
+  socket.receive({
+    type: "signal",
+    from: "remote",
+    description: { type: "offer", sdp: "remote offer" },
+  });
+  await vi.waitFor(() =>
+    expect(Connection.instances[0]?.finishDescription).toBeDefined(),
+  );
+  Connection.instances[0].finishDescription!();
+  await vi.waitFor(() => expect(socket.sent).toHaveLength(2));
+  const channel = { readyState: "open", close: vi.fn() };
+  Connection.instances[0].ondatachannel!({
+    channel: channel as unknown as RTCDataChannel,
+  });
+  await vi.advanceTimersByTimeAsync(30_000);
+  expect(channel.close).toHaveBeenCalledOnce();
+  const attempts = onOpen.mock.calls.length;
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(onOpen).toHaveBeenCalledTimes(attempts);
+});

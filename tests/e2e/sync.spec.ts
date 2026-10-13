@@ -416,6 +416,23 @@ test("seat request pairs a name with a seat, survives reload, and renames only o
 }) => {
   const link = await enable(host);
   const context = await browser.newContext();
+  await context.addInitScript(() => {
+    let droppedHello = false;
+    const original = RTCDataChannel.prototype.send;
+    RTCDataChannel.prototype.send = function (
+      this: RTCDataChannel,
+      data: unknown,
+    ) {
+      if (typeof data === "string" && !droppedHello) {
+        const chunk = JSON.parse(data);
+        if (chunk.index === 0 && JSON.parse(chunk.text).type === "hello") {
+          droppedHello = true;
+          return;
+        }
+      }
+      Reflect.apply(original, this, [data]);
+    };
+  });
   const phone = await context.newPage();
   await observeConnections(phone, test.info());
   try {
