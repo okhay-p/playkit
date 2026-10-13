@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { createId } from "../id";
 import { restoreSession } from "../poker/engine";
-import { type Command, type Session } from "../poker/model";
+import { playerSchema, type Command, type Session } from "../poker/model";
 import { dispatch, dispatchEnvelope, sessionStore } from "../storage/session";
 import { approveSeat, authorizeCommand, type PlayerCommand } from "./protocol";
 import { roomSchema } from "./signaling";
@@ -267,7 +267,9 @@ async function connectHost() {
         ) {
           publish({
             requests: state.requests.map((r) =>
-              r.peer === peer ? { ...r, seat: message.seat } : r,
+              r.peer === peer
+                ? { ...r, seat: message.seat, name: message.name ?? r.name }
+                : r,
             ),
           });
           transport?.send(peer, {
@@ -355,6 +357,15 @@ export async function approvePhone(peer: string) {
         seat: request.seat,
       }),
     };
+    const player = sessionStore
+      .getSnapshot()
+      .current!.core.players.find((p) => p.id === request.seat)!;
+    if (player.name !== request.name)
+      await dispatch({
+        type: "rename-player",
+        playerId: player.id,
+        name: request.name,
+      });
     await saveHost(host);
     publish({ host, requests: state.requests.filter((r) => r.peer !== peer) });
     sendSnapshot(peer);
@@ -475,6 +486,13 @@ async function connectGuest() {
         credential: state.guest!.credential,
         name: state.guest!.name,
       });
+      if (state.guest!.requestedSeat && !state.guest!.seat)
+        transport?.sendHost({
+          type: "request-seat",
+          version: 1,
+          seat: state.guest!.requestedSeat,
+          name: state.guest!.name,
+        });
     },
     close: () => {
       publish({ connected: false, paused: true });
@@ -502,7 +520,12 @@ async function connectGuest() {
         const gap =
           !!state.current && next.revision > state.current.revision + 1;
         // Each update is a complete snapshot: a revision gap needs no speculative replay.
-        const value = { ...state.guest, session: next, seat: message.seat };
+        const value = {
+          ...state.guest,
+          session: next,
+          seat: message.seat,
+          requestedSeat: null,
+        };
         await saveGuest(value);
         publish({
           guest: value,
@@ -568,8 +591,21 @@ async function connectGuest() {
   });
   await transport.start();
 }
-export function requestSeat(seat: string) {
-  transport?.sendHost({ type: "request-seat", version: 1, seat });
+export async function requestSeat(seat: string, name: string) {
+  if (!state.guest) throw new Error("Join the table first.");
+  const value = {
+    ...state.guest,
+    name: playerSchema.shape.name.parse(name),
+    requestedSeat: seat,
+  };
+  await saveGuest(value);
+  publish({ guest: value });
+  transport?.sendHost({
+    type: "request-seat",
+    version: 1,
+    seat,
+    name: value.name,
+  });
   publish({ notice: "Waiting for the host to approve your seat." });
 }
 export async function submit(command: Command, expectedRevision?: number) {

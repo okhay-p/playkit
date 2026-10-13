@@ -29,6 +29,7 @@ export const guestSchema = z.object({
   session: sessionSchema.nullable(),
   seat: z.string().nullable(),
   pending: playerCommandSchema.nullable(),
+  requestedSeat: z.string().nullable().optional(),
 });
 export type GuestConfig = z.infer<typeof guestSchema>;
 const db = new Dexie("playkit-connections") as Dexie & {

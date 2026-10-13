@@ -25,6 +25,7 @@ export const wireSchema = z.discriminatedUnion("type", [
     type: z.literal("request-seat"),
     version: z.literal(1),
     seat: z.string().min(1).max(128),
+    name: z.string().trim().min(1).max(24).optional(),
   }),
   playerCommandSchema,
   z.object({ type: z.literal("snapshot-request"), version: z.literal(1) }),

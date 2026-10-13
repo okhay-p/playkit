@@ -534,3 +534,36 @@ describe("whole hands across starting configurations", () => {
     },
   );
 });
+
+describe("approved player names", () => {
+  it("renames a player during a hand without changing chips, identity, or undoing bets", () => {
+    let session = command(table(), { type: "start" });
+    session = action(session, "call");
+    const before = session;
+    const seated = before.core.players[3];
+    session = command(session, {
+      type: "rename-player",
+      playerId: seated.id,
+      name: " Oakkar ",
+    });
+    expect(session.core.players[3]).toEqual({ ...seated, name: "Oakkar" });
+    expect(session.core.actor).toBe(before.core.actor);
+    expect(session.core.totalChips).toBe(before.core.totalChips);
+    expect(session.undo).toHaveLength(before.undo.length);
+    session = command(restoreSession(session), { type: "undo" });
+    expect(session.core.players[3].name).toBe("Oakkar");
+    expect(session.core.players[3].stack).toBe(1000);
+  });
+  it("rejects duplicate and blank names without changing the table", () => {
+    const session = table();
+    for (const name of ["jordan", " "])
+      expect(() =>
+        command(session, {
+          type: "rename-player",
+          playerId: session.core.players[0].id,
+          name,
+        }),
+      ).toThrow();
+    expect(session.core.players[0].name).toBe("Alex");
+  });
+});
