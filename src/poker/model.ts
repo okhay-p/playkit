@@ -100,6 +100,11 @@ export const commandSchema = z.discriminatedUnion("type", [
     stack: chips.min(1),
     playerId: z.string().min(1),
   }),
+  z.object({
+    type: z.literal("rename-player"),
+    playerId: z.string(),
+    name: playerSchema.shape.name,
+  }),
   z.object({ type: z.literal("remove-player"), playerId: z.string() }),
   z.object({ type: z.literal("reorder"), ids: z.array(z.string()) }),
 ]);

@@ -631,6 +631,26 @@ export function applyCommand(original: Session, input: Envelope): Session {
         c.addedChips += command.stack;
         emit(`${command.name} joined with ${command.stack} chips`);
         break;
+      case "rename-player": {
+        const seated = player(c, command.playerId);
+        for (const core of [
+          c,
+          ...session.undo.map((snapshot) => snapshot.core),
+        ]) {
+          requireRule(
+            !core.players.some(
+              (p) =>
+                p.id !== seated.id &&
+                p.name.toLowerCase() === command.name.toLowerCase(),
+            ),
+            "That name is already at the table.",
+          );
+          const existing = core.players.find((p) => p.id === seated.id);
+          if (existing) existing.name = command.name;
+        }
+        emit(`${seated.name} is now seated`);
+        break;
+      }
       case "remove-player": {
         betweenHands(c);
         requireRule(
@@ -661,7 +681,7 @@ export function applyCommand(original: Session, input: Envelope): Session {
         emit("Seat order updated");
         break;
     }
-    if (command.type !== "start")
+    if (command.type !== "start" && command.type !== "rename-player")
       session.undo.push({ core: prior, label: messages[0] ?? command.type });
   }
   messages.forEach((message, i) =>

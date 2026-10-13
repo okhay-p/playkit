@@ -47,7 +47,6 @@ async function join(
   const page = await context.newPage();
   await observeConnections(page, test.info());
   await page.goto(link);
-  await page.getByLabel("Your name").fill(name);
   await page.getByRole("button", { name: "Join table", exact: true }).click();
   const picker = page.getByRole("combobox", {
     name: "Choose your seat",
@@ -57,6 +56,7 @@ async function join(
   // Allow that deadline plus rendering rather than the 15-second action timeout.
   await expect(picker).toBeVisible({ timeout: 35_000 });
   await picker.selectOption({ label: seat });
+  await page.getByLabel("Your name", { exact: true }).fill(name);
   await page.getByRole("button", { name: "Request seat", exact: true }).click();
   await host
     .getByRole("button", { name: `Approve ${name}`, exact: true })
@@ -73,8 +73,8 @@ test("host and two phones play, settle, correct, and close a complete hand", asy
 }) => {
   test.setTimeout(300_000);
   const link = await enable(host);
-  const first = await join(browser, link, "Casey phone", "Casey", host);
-  const second = await join(browser, link, "Alex phone", "Alex", host);
+  const first = await join(browser, link, "Casey", "Casey", host);
+  const second = await join(browser, link, "Alex", "Alex", host);
   try {
     await host
       .getByRole("button", { name: "Close dialog", exact: true })
@@ -239,7 +239,7 @@ test("phones recover after client/host refresh, freeze offline, and require appr
   const { page: phone, context } = await join(
     browser,
     link,
-    "Casey phone",
+    "Casey",
     "Casey",
     host,
   );
@@ -328,7 +328,7 @@ test("phones recover after client/host refresh, freeze offline, and require appr
     ).toBeVisible({ timeout: 35_000 });
     await host.getByRole("button", { name: "Invite", exact: true }).click();
     await host
-      .getByRole("button", { name: "Disconnect Casey phone", exact: true })
+      .getByRole("button", { name: "Disconnect Casey", exact: true })
       .click();
     await expect(phone.getByLabel("Choose your seat")).toBeVisible();
     await phone.getByLabel("Choose your seat").selectOption({ label: "Casey" });
@@ -336,7 +336,7 @@ test("phones recover after client/host refresh, freeze offline, and require appr
       .getByRole("button", { name: "Request seat", exact: true })
       .click();
     await host
-      .getByRole("button", { name: "Approve Casey phone", exact: true })
+      .getByRole("button", { name: "Approve Casey", exact: true })
       .click();
     await expect(
       phone.getByText("Your seat: Casey", { exact: true }),
@@ -378,7 +378,7 @@ test("ten approved phone seats receive the same authoritative hand", async ({
       ...Array.from({ length: 6 }, (_, i) => `Player ${i + 5}`),
     ];
     for (const name of names)
-      phones.push(await join(browser, link, `${name} phone`, name, host));
+      phones.push(await join(browser, link, name, name, host));
     await expect(host.getByText("Connected", { exact: true })).toHaveCount(10);
     await host
       .getByRole("button", { name: "Close dialog", exact: true })
@@ -407,5 +407,100 @@ test("ten approved phone seats receive the same authoritative hand", async ({
       ).toBeVisible();
   } finally {
     for (const { context } of phones) await context.close();
+  }
+});
+
+test("seat request pairs a name with a seat, survives reload, and renames only on approval", async ({
+  page: host,
+  browser,
+}) => {
+  const link = await enable(host);
+  const context = await browser.newContext();
+  await context.addInitScript(() => {
+    let droppedHello = false;
+    const original = RTCDataChannel.prototype.send;
+    RTCDataChannel.prototype.send = function (
+      this: RTCDataChannel,
+      data: unknown,
+    ) {
+      if (typeof data === "string" && !droppedHello) {
+        const chunk = JSON.parse(data);
+        if (chunk.index === 0 && JSON.parse(chunk.text).type === "hello") {
+          droppedHello = true;
+          return;
+        }
+      }
+      Reflect.apply(original, this, [data]);
+    };
+  });
+  const phone = await context.newPage();
+  await observeConnections(phone, test.info());
+  try {
+    await phone.goto(link);
+    await expect(phone.getByLabel("Your name", { exact: true })).toHaveCount(0);
+    await phone
+      .getByRole("button", { name: "Join table", exact: true })
+      .click();
+    const picker = phone.getByRole("combobox", {
+      name: "Choose your seat",
+      exact: true,
+    });
+    await expect(picker).toBeVisible({ timeout: 35_000 });
+    await picker.selectOption({ label: "Jordan" });
+    await phone.getByLabel("Your name", { exact: true }).fill("Oakkar");
+    await phone
+      .getByRole("button", { name: "Request seat", exact: true })
+      .click();
+    await expect(
+      host.getByRole("button", { name: "Approve Oakkar", exact: true }),
+    ).toBeEnabled();
+    await expect(
+      host
+        .getByRole("listitem")
+        .filter({ hasText: "Oakkar" })
+        .getByText("Jordan", { exact: true }),
+    ).toBeVisible();
+    await phone.reload();
+    await expect(
+      phone.getByRole("combobox", { name: "Choose your seat", exact: true }),
+    ).toBeVisible({ timeout: 35_000 });
+    await expect(phone.getByLabel("Your name", { exact: true })).toHaveValue(
+      "Oakkar",
+    );
+    await expect(
+      host.getByRole("button", { name: "Approve Oakkar", exact: true }),
+    ).toBeEnabled({ timeout: 35_000 });
+    await host
+      .getByRole("button", { name: "Approve Oakkar", exact: true })
+      .click();
+    await expect(
+      phone.getByText("Your seat: Oakkar", { exact: true }),
+    ).toBeVisible();
+    await host
+      .getByRole("button", { name: "Close dialog", exact: true })
+      .click();
+    await host.getByRole("button", { name: "Start hand", exact: true }).click();
+    await confirm(host);
+    await action(host, "Call 10");
+    await action(host, "Call 10");
+    await expect(
+      phone.getByRole("heading", { name: "Oakkar’s turn", exact: true }),
+    ).toBeVisible();
+    await action(phone, "Call 5");
+    await expect(
+      host.getByText("Oakkar called 5", { exact: true }),
+    ).toBeVisible();
+    await host.reload();
+    await expect(
+      host.getByRole("button", { name: "Resume game", exact: true }),
+    ).toBeVisible();
+    await host
+      .getByRole("button", { name: "Resume game", exact: true })
+      .click();
+    await expect(
+      phone.getByText("Your seat: Oakkar", { exact: true }),
+    ).toBeVisible({ timeout: 35_000 });
+  } finally {
+    await context.close();
   }
 });

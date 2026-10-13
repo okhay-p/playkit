@@ -3,11 +3,10 @@ import { Link } from "@tanstack/react-router";
 import { joinPhone, signalingEndpoint, useSync } from "../sync/controller";
 import { parseInvitation } from "../sync/credentials";
 import { PhoneStatus } from "./phones";
-import { field, primary } from "./primitives";
+import { primary } from "./primitives";
 import { Table } from "./poker";
 export function Join() {
   const sync = useSync();
-  const [name, setName] = useState("");
 
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
@@ -31,7 +30,7 @@ export function Join() {
             setWorking(true);
             setError("");
             try {
-              await joinPhone(parseInvitation(location.hash), name);
+              await joinPhone(parseInvitation(location.hash), "Guest");
               history.replaceState(null, "", location.pathname);
             } catch (err) {
               setError(
@@ -44,17 +43,6 @@ export function Join() {
             }
           }}
         >
-          <label className="block font-bold">
-            Your name
-            <input
-              autoComplete="nickname"
-              className={`${field} my-3`}
-              required
-              maxLength={24}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
           <button
             className={primary}
             disabled={working || !signalingEndpoint()}

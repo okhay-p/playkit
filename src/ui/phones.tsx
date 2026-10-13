@@ -176,7 +176,13 @@ export function Phones({ close }: { close: () => void }) {
 }
 export function PhoneStatus() {
   const sync = useSync();
-  const [seat, setSeat] = useState("");
+  const [seat, setSeat] = useState(sync.guest?.requestedSeat ?? "");
+  const [name, setName] = useState(
+    sync.guest?.name === "Guest" && !sync.guest.requestedSeat
+      ? ""
+      : (sync.guest?.name ?? ""),
+  );
+  const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState("");
   if (sync.role !== "guest") return null;
   return (
@@ -201,9 +207,19 @@ export function PhoneStatus() {
       )}
       {!sync.seat && sync.seats.length > 0 ? (
         <form
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            requestSeat(seat);
+            setRequesting(true);
+            setError("");
+            try {
+              await requestSeat(seat, name);
+            } catch (err) {
+              setError(
+                err instanceof Error ? err.message : "Could not request seat.",
+              );
+            } finally {
+              setRequesting(false);
+            }
           }}
         >
           <label className="block font-bold">
@@ -223,7 +239,25 @@ export function PhoneStatus() {
               ))}
             </select>
           </label>
-          <button className={primary} disabled={!seat}>
+          <label className="block font-bold">
+            Your name
+            <input
+              autoComplete="nickname"
+              className={`${field} my-3`}
+              required
+              maxLength={24}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+          <p className="mb-3 text-sm text-slate-600">
+            Your name replaces the selected seat’s name when the host approves.
+            Its chips stay the same.
+          </p>
+          <button
+            className={primary}
+            disabled={!seat || !name.trim() || requesting}
+          >
             Request seat
           </button>
         </form>

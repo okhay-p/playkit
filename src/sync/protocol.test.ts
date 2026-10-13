@@ -143,6 +143,15 @@ describe("phone authorization and retries", () => {
     expect(snapshot.undo).toEqual([]);
     expect(restoreSession(snapshot).core).toEqual(session.core);
   });
+  it("validates named seat requests while accepting older request messages", () => {
+    const request = { type: "request-seat", version: 1, seat: "seat-1" };
+    expect(wireSchema.safeParse(request).success).toBe(true);
+    expect(wireSchema.parse({ ...request, name: " Oakkar " })).toEqual({
+      ...request,
+      name: "Oakkar",
+    });
+    expect(wireSchema.safeParse({ ...request, name: " " }).success).toBe(false);
+  });
   it("requires the full high-entropy invitation", () => {
     expect(parseInvitation(`#${"a".repeat(43)}.${"b".repeat(43)}`)).toEqual({
       room: "a".repeat(43),
