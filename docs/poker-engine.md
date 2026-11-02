@@ -12,7 +12,7 @@ Pot thresholds include folded contributions and exclude folded hands from eligib
 
 ## State and corrections
 
-Phases are `between`, `betting`, `awaiting`, `showdown`, `preview`, and `settled`. An explicit dealing command advances each street, including all-in runouts. Fold wins settle automatically. Showdown entry is atomic across board, hands, and muck decisions. Preview computes but does not credit awards. Settlement recomputes the validated result before crediting stacks.
+Phases are `between`, `betting`, `awaiting`, `showdown`, `preview`, and `settled`. An explicit dealing command advances each street, including all-in runouts, and can carry that street's community cards. A board command edits dealt cards during betting or while waiting for the next deal, and cannot enter more cards than the current street has dealt. Neither requires cards. Fold wins settle automatically. Showdown entry is atomic across board, hands, and muck decisions, starting from any cards already entered. Preview computes but does not credit awards. Settlement recomputes the validated result before crediting stacks.
 
 Undo restores the preceding core state, while recording a correction in the permanent event log and advancing the revision. Starting a hand clears undo, so results from a previous hand cannot be reversed afterward. Rebuys and roster changes are limited to between hands and maintain deposited/withdrawn chip totals. Removing the current dealer preserves the next dealer's position.
 

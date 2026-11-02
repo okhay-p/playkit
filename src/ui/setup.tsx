@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { newSession } from "../storage/session";
 import { useSync } from "../sync/controller";
 import { useSession } from "./use-session";
-import { field, primary } from "./primitives";
+import { field, NumberInput, primary } from "./primitives";
 import { createId } from "../id";
 import { ParticipantSetup } from "./participant-setup";
 
@@ -94,30 +94,28 @@ export function Setup() {
         <div className="grid grid-cols-2 gap-4">
           <label className="font-bold">
             Small blind
-            <input
+            <NumberInput
               className={`${field} mt-2`}
-              type="number"
               inputMode="numeric"
               min={1}
               max={1e9}
               step={1}
               required
               value={small}
-              onChange={(e) => setSmall(Number(e.target.value))}
+              onValueChange={setSmall}
             />
           </label>
           <label className="font-bold">
             Big blind
-            <input
+            <NumberInput
               className={`${field} mt-2`}
-              type="number"
               inputMode="numeric"
               min={small || 1}
               max={1e9}
               step={1}
               required
               value={big}
-              onChange={(e) => setBig(Number(e.target.value))}
+              onValueChange={setBig}
             />
           </label>
         </div>

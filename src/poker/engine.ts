@@ -1,9 +1,10 @@
 import { createId } from "../id";
 import { z } from "zod";
-import { compareRanks, evaluate } from "./cards";
+import { cardLabel, compareRanks, evaluate } from "./cards";
 import {
   MAX_CHIPS,
   STREETS,
+  boardSize,
   envelopeSchema,
   sessionSchema,
   type Command,
@@ -341,6 +342,15 @@ function takeAction(
   advance(c, emit);
 }
 
+function setBoard(c: Core, board: string[]) {
+  requireRule(
+    board.length <= boardSize(c.street),
+    `Only ${boardSize(c.street)} community cards have been dealt.`,
+  );
+  c.board = board;
+}
+const boardMessage = (board: string[]) => board.map(cardLabel).join(" ");
+
 export function showdownResult(c: Core): Result {
   requireRule(
     c.phase === "showdown" || c.phase === "preview",
@@ -538,7 +548,23 @@ export function applyCommand(original: Session, input: Envelope): Session {
           .filter(canAct)
           .map((p) => p.id);
         emit(`${STREETS[c.street]} dealt`);
+        if (command.board) {
+          setBoard(c, command.board);
+          if (c.board.length) emit(`Community cards: ${boardMessage(c.board)}`);
+        }
         advance(c, emit);
+        break;
+      case "board":
+        requireRule(
+          c.phase === "betting" || c.phase === "awaiting",
+          "Enter community cards while the hand is running.",
+        );
+        setBoard(c, command.board);
+        emit(
+          c.board.length
+            ? `Community cards: ${boardMessage(c.board)}`
+            : "Community cards cleared",
+        );
         break;
       case "showdown": {
         requireRule(

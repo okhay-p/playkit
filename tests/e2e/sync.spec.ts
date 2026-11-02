@@ -142,7 +142,7 @@ test("host and two phones play, settle, correct, and close a complete hand", asy
       .getByRole("button", { name: "Enter cards", exact: true })
       .click();
     for (const [i, card] of ["2c", "3d", "7h", "9s", "Jc"].entries())
-      await host.getByLabel(`Community card ${i + 1}`).selectOption(card);
+      await host.getByLabel(`Community card ${i + 1}`).fill(card);
     for (const [name, cards] of Object.entries({
       Alex: ["As", "Ad"],
       Jordan: ["Ks", "Kd"],
@@ -150,7 +150,7 @@ test("host and two phones play, settle, correct, and close a complete hand", asy
       Casey: ["Ts", "Td"],
     }))
       for (const [i, card] of cards.entries())
-        await host.getByLabel(`${name} card ${i + 1}`).selectOption(card);
+        await host.getByLabel(`${name} card ${i + 1}`).fill(card);
     await host
       .getByRole("button", { name: "Save showdown cards", exact: true })
       .click();

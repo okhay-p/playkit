@@ -3,7 +3,7 @@ import { useState } from "react";
 import { type Command, type Core } from "../poker/model";
 import { dispatch } from "../storage/session";
 import { useSession } from "./use-session";
-import { field, Modal, number, secondary } from "./primitives";
+import { field, Modal, number, NumberInput, secondary } from "./primitives";
 
 export function Manage({ core: c, close }: { core: Core; close: () => void }) {
   const { busy } = useSession();
@@ -131,16 +131,15 @@ export function Manage({ core: c, close }: { core: Core; close: () => void }) {
           </label>
           <label className="text-sm">
             Chips
-            <input
+            <NumberInput
               className={`${field} mt-1`}
-              type="number"
               inputMode="numeric"
               min={1}
               max={1e9}
               step={1}
               required
               value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
+              onValueChange={setAmount}
             />
           </label>
         </div>
@@ -177,16 +176,15 @@ export function Manage({ core: c, close }: { core: Core; close: () => void }) {
             </label>
             <label className="text-sm">
               Starting chips
-              <input
+              <NumberInput
                 className={`${field} mt-1`}
-                type="number"
                 inputMode="numeric"
                 min={1}
                 max={1e9}
                 step={1}
                 required
                 value={stack}
-                onChange={(e) => setStack(Number(e.target.value))}
+                onValueChange={setStack}
               />
             </label>
           </div>

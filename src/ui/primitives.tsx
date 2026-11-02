@@ -4,6 +4,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type ComponentProps,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -13,6 +14,38 @@ export const secondary = "btn btn-secondary";
 export const iconButton = "btn btn-secondary btn-icon";
 export const field = "field";
 export const number = (n: number) => n.toLocaleString();
+/** Drops the zeros a browser leaves in front of digits typed after a cleared or zero value. */
+export const withoutLeadingZeros = (text: string) =>
+  text.replace(/^(-?)0+(?=\d)/, "$1");
+const parseNumber = (text: string) => (text === "" ? 0 : Number(text));
+/**
+ * A number field backed by a numeric value. The text is kept separately so the field can be
+ * empty while someone retypes it; an empty field reports 0, and `required` still rejects it.
+ */
+export function NumberInput({
+  value,
+  onValueChange,
+  ...props
+}: Omit<ComponentProps<"input">, "value" | "onChange" | "type"> & {
+  value: number;
+  onValueChange: (value: number) => void;
+}) {
+  const [text, setText] = useState(String(value));
+  // Buttons such as Minimum and All-in change the value from outside the field.
+  if (parseNumber(text) !== value) setText(String(value));
+  return (
+    <input
+      {...props}
+      type="number"
+      value={text}
+      onChange={(event) => {
+        const next = withoutLeadingZeros(event.target.value);
+        setText(next);
+        onValueChange(parseNumber(next));
+      }}
+    />
+  );
+}
 export function Modal({
   title,
   children,

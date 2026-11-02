@@ -88,7 +88,7 @@ test("plays a complete physical hand, restores a preview, settles, and corrects 
   );
   await page.getByRole("button", { name: "Enter cards", exact: true }).click();
   for (const [i, card] of ["2c", "3d", "7h", "9s", "Jc"].entries())
-    await page.getByLabel(`Community card ${i + 1}`).selectOption(card);
+    await page.getByLabel(`Community card ${i + 1}`).fill(card);
   const holeCards = {
     Alex: ["As", "Ad"],
     Jordan: ["Ks", "Kd"],
@@ -97,10 +97,10 @@ test("plays a complete physical hand, restores a preview, settles, and corrects 
   };
   for (const [name, cards] of Object.entries(holeCards))
     for (const [i, card] of cards.entries())
-      await page.getByLabel(`${name} card ${i + 1}`).selectOption(card);
-  await expect(
-    page.getByLabel("Jordan card 1").locator('option[value="As"]'),
-  ).toBeDisabled();
+      await page.getByLabel(`${name} card ${i + 1}`).fill(card);
+  await page.getByLabel("Jordan card 1").fill("As");
+  await expect(page.getByRole("option", { name: "A♠" })).toBeDisabled();
+  await page.getByLabel("Jordan card 1").fill("Ks");
   await page
     .getByRole("button", { name: "Save showdown cards", exact: true })
     .click();
@@ -114,7 +114,7 @@ test("plays a complete physical hand, restores a preview, settles, and corrects 
   expect(preview.core.preview.awards[preview.core.players[0].id]).toBe(40);
   expect(preview.core.players[0].stack).toBe(990);
   await page.getByRole("button", { name: "Enter cards", exact: true }).click();
-  await page.getByLabel("Alex card 2").selectOption("Ac");
+  await page.getByLabel("Alex card 2").fill("Ac");
   await page
     .getByRole("button", { name: "Save showdown cards", exact: true })
     .click();
@@ -204,7 +204,7 @@ test("all-in side pots enforce muck eligibility and return excess", async ({
       .click();
   await page.getByRole("button", { name: "Enter cards", exact: true }).click();
   for (const [i, card] of ["2c", "3d", "7h", "9s", "Jc"].entries())
-    await page.getByLabel(`Community card ${i + 1}`).selectOption(card);
+    await page.getByLabel(`Community card ${i + 1}`).fill(card);
   const cards = {
     Alex: ["As", "Ad"],
     Jordan: ["Ks", "Kd"],
@@ -213,7 +213,7 @@ test("all-in side pots enforce muck eligibility and return excess", async ({
   };
   for (const [name, hand] of Object.entries(cards))
     for (const [i, card] of hand.entries())
-      await page.getByLabel(`${name} card ${i + 1}`).selectOption(card);
+      await page.getByLabel(`${name} card ${i + 1}`).fill(card);
   const muck = page.getByRole("checkbox", { name: "Muck", exact: true });
   await muck.nth(3).check();
   await expect(muck.nth(2)).toBeDisabled();
@@ -441,13 +441,13 @@ test("short all-in blind runs out, settles, rebuys, and starts another hand", as
       .click();
   await page.getByRole("button", { name: "Enter cards", exact: true }).click();
   for (const [i, card] of ["2c", "3d", "7h", "9s", "Jc"].entries())
-    await page.getByLabel(`Community card ${i + 1}`).selectOption(card);
+    await page.getByLabel(`Community card ${i + 1}`).fill(card);
   for (const [name, cards] of Object.entries({
     Alex: ["As", "Ad"],
     Jordan: ["Ks", "Kd"],
   }))
     for (const [i, card] of cards.entries())
-      await page.getByLabel(`${name} card ${i + 1}`).selectOption(card);
+      await page.getByLabel(`${name} card ${i + 1}`).fill(card);
   await page
     .getByRole("button", { name: "Save showdown cards", exact: true })
     .click();
@@ -481,4 +481,90 @@ test("short all-in blind runs out, settles, rebuys, and starts another hand", as
   await expect(
     page.getByRole("heading", { name: "Jordan’s turn" }),
   ).toBeVisible();
+});
+
+test("enters community cards street by street and keeps them for showdown", async ({
+  page,
+}) => {
+  await setup(page);
+  await act(page, "Call 10");
+  await act(page, "Call 10");
+  await act(page, "Call 5");
+  await act(page, "Check");
+
+  await page
+    .getByRole("button", { name: "Enter flop cards", exact: true })
+    .click();
+  await expect(page.getByLabel("Community card 1")).toBeFocused();
+  await expect(page.getByLabel("Community card 4")).toHaveCount(0);
+  // A full card fills the slot and moves on, so the flop can be typed in one go.
+  await page.keyboard.type("as");
+  await expect(page.getByLabel("Community card 2")).toBeFocused();
+  // A rank narrows the list, and a used card stays visible but unavailable.
+  await page.keyboard.type("a");
+  await expect(page.getByRole("option")).toHaveCount(4);
+  await expect(page.getByRole("option", { name: "A♠" })).toBeDisabled();
+  await page.getByRole("option", { name: "A♥" }).click();
+  await expect(page.getByLabel("Community card 3")).toBeFocused();
+  await page.keyboard.type("10");
+  await expect(page.getByRole("option")).toHaveCount(4);
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("button", { name: "Save flop cards", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByLabel("Community cards: A♠ A♥ 10♠")).toBeVisible();
+  expect((await saved(page)).core.board).toEqual(["As", "Ah", "Ts"]);
+  // Seats sit around the felt and must never cover the cards.
+  const cards = await page
+    .getByLabel("Community cards: A♠ A♥ 10♠")
+    .boundingBox();
+  for (const seat of await page.locator(".seat-card").all()) {
+    const box = await seat.boundingBox();
+    expect(box!.y).toBeGreaterThanOrEqual(cards!.y + cards!.height);
+  }
+
+  // Correct a card during betting without disturbing the turn.
+  await page
+    .getByRole("button", { name: "Edit community cards", exact: true })
+    .click();
+  await page.getByLabel("Community card 3").fill("9c");
+  await page
+    .getByRole("button", { name: "Save community cards", exact: true })
+    .click();
+  await expect(page.getByLabel("Community cards: A♠ A♥ 9♣")).toBeVisible();
+  await checkStreet(page);
+
+  // Skipping entry on the turn still works, and the river can catch it up.
+  await page.getByRole("button", { name: "Turn dealt", exact: true }).click();
+  await checkStreet(page);
+  await page
+    .getByRole("button", { name: "Enter river cards", exact: true })
+    .click();
+  await expect(page.getByLabel("Community card 4")).toBeFocused();
+  await page.keyboard.type("2d");
+  await page.keyboard.type("3h");
+  await page.getByRole("button", { name: "Save river cards" }).click();
+  await checkStreet(page);
+
+  await page.getByRole("button", { name: "Enter cards", exact: true }).click();
+  await expect(page.getByLabel("Community card 5")).toHaveValue("3♥");
+  await expect(page.getByLabel("Alex card 1")).toBeFocused();
+});
+
+test("number fields do not keep a leading zero when retyped", async ({
+  page,
+}) => {
+  await page.goto("/poker/new");
+  const small = page.getByLabel("Small blind");
+  await small.fill("");
+  await small.pressSequentially("05");
+  await expect(small).toHaveValue("5");
+  await small.fill("0");
+  await small.pressSequentially("25");
+  await expect(small).toHaveValue("25");
+  await small.fill("");
+  await page.getByRole("button", { name: "Create table", exact: true }).click();
+  await expect(page).toHaveURL(/poker\/new/);
 });

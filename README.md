@@ -4,7 +4,7 @@
 
 ## What you can do
 
-- **Poker:** run a 2–10 player no-limit Texas Hold’em cash game. Track betting turns, blinds, folds, raises, and all-ins; enter physical cards at showdown; preview side-pot payouts and settle the hand. Includes mucking, undo/history, rebuys, cashouts, and saved-game recovery.
+- **Poker:** run a 2–10 player no-limit Texas Hold’em cash game. Track betting turns, blinds, folds, raises, and all-ins; enter community cards street by street or at showdown, typing to filter; preview side-pot payouts and settle the hand. Includes mucking, undo/history, rebuys, cashouts, and saved-game recovery.
 - **Chess clock:** configure each player's time, choose who starts, and add a Fischer increment after moves. Tap the active clock to switch turns, pause/resume, or reset with confirmation. Reloading or hiding the app pauses play.
 - **Scorekeeper:** record and correct whole-point rounds for players or teams, show standings, set an optional target, and undo changes.
 - **Tournament manager:** organize round-robin matches or knockout brackets with byes, standings, result corrections, and saved recovery.

@@ -412,6 +412,22 @@ a:focus-visible {
 }
 
 /* Casino chips: dashed edge, inner ring, stacked rim. */
+.board-card {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.75rem;
+  border-radius: 0.5rem;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.25);
+  font-size: 0.8rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-play-ink);
+}
+.board-card[data-red="true"] {
+  color: #dc2626;
+}
 .chip {
   --chip: #3b82f6;
   --chip-deep: #2563eb;

@@ -50,8 +50,8 @@ State sequence:
 `between hands → preflop → awaiting flop → flop → awaiting turn → turn → awaiting river → river → showdown entry → payout preview → settled`
 
 - Beginning a hand posts blinds automatically, including short-stack partial blinds, and starts preflop action.
-- When betting closes, wait for an explicit “Flop dealt,” “Turn dealt,” or “River dealt” action. These buttons record physical dealing; they do not require card entry.
-- Enter the five community cards and shown players’ two hole cards together at showdown.
+- When betting closes, wait for an explicit “Flop dealt,” “Turn dealt,” or “River dealt” action. These record physical dealing and do not require card entry, but the host can enter the street’s community cards in the same step.
+- The host can add or correct dealt community cards during betting. Cards entered early carry into showdown, where any missing community cards and shown players’ two hole cards are entered.
 - If all but one player folds, settle immediately without card entry or showdown.
 - If no further betting is possible because players are all-in, continue through explicit dealing confirmations to showdown without artificial betting turns.
 - When only one player can still act, require any outstanding call/fold decision; do not allow further betting against players who cannot respond.
