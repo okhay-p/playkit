@@ -9,6 +9,30 @@ export const suitGlyph: Record<string, string> = {
   h: "♥",
   s: "♠",
 };
+export const cardLabel = (card: string) =>
+  `${card[0] === "T" ? "10" : card[0]}${suitGlyph[card[1]]}`;
+const byPickerOrder = [...RANKS]
+  .reverse()
+  .flatMap((rank) => ["s", "h", "d", "c"].map((suit) => rank + suit));
+/**
+ * Cards matching what someone typed: a rank ("a", "10"), a suit ("s", "♠"), or both ("as", "10♠").
+ * Highest rank first, so the list reads the same however it is narrowed.
+ */
+export function matchCards(query: string): string[] {
+  const typed = query
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[♣♦♥♠]/g, (glyph) =>
+      SUITS.find((suit) => suitGlyph[suit] === glyph)!,
+    )
+    .replace(/1(0|(?=[cdhs])|$)/, "t");
+  if (!typed) return byPickerOrder;
+  return byPickerOrder.filter((card) => {
+    const id = card.toLowerCase();
+    if (typed.length === 1) return id[0] === typed || id[1] === typed;
+    return id === typed || id === `${typed[1]}${typed[0]}`;
+  });
+}
 const labels = [
   "High card",
   "One pair",

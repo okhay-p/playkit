@@ -9,7 +9,7 @@ import {
   restoreSession,
   showdownResult,
 } from "./engine";
-import { DECK, evaluate, compareRanks } from "./cards";
+import { cardLabel, DECK, evaluate, compareRanks, matchCards } from "./cards";
 import { MAX_CHIPS, type Command, type Session } from "./model";
 
 function table(stacks = [1000, 1000, 1000, 1000], bigBlind = 10) {
@@ -565,5 +565,100 @@ describe("approved player names", () => {
         }),
       ).toThrow();
     expect(session.core.players[0].name).toBe("Alex");
+  });
+});
+
+describe("community cards during the hand", () => {
+  const preflopDone = () => finishStreet(command(table(), { type: "start" }));
+
+  it("records cards with the deal and restores them on undo", () => {
+    let s = command(preflopDone(), {
+      type: "deal",
+      board: ["As", "Kd", "7c"],
+    });
+    expect(s.core.street).toBe(1);
+    expect(s.core.board).toEqual(["As", "Kd", "7c"]);
+    expect(s.events.at(-1)!.message).toContain("A♠ K♦ 7♣");
+    s = command(s, { type: "undo" });
+    expect(s.core.street).toBe(0);
+    expect(s.core.board).toEqual([]);
+  });
+  it("still deals without cards", () => {
+    expect(command(preflopDone(), { type: "deal" }).core.board).toEqual([]);
+  });
+  it("edits the board during betting without changing the turn", () => {
+    const flop = command(preflopDone(), { type: "deal" });
+    const s = command(flop, { type: "board", board: ["As", "Kd"] });
+    expect(s.core.board).toEqual(["As", "Kd"]);
+    expect(s.core.actor).toBe(flop.core.actor);
+    expect(s.core.phase).toBe("betting");
+    expect(command(s, { type: "undo" }).core.board).toEqual([]);
+  });
+  it("rejects more cards than the street has dealt", () => {
+    expect(() =>
+      command(command(table(), { type: "start" }), {
+        type: "board",
+        board: ["As"],
+      }),
+    ).toThrow("Only 0 community cards");
+    expect(() =>
+      command(preflopDone(), {
+        type: "deal",
+        board: ["As", "Kd", "7c", "2h"],
+      }),
+    ).toThrow("Only 3 community cards");
+  });
+  it("rejects duplicate cards", () => {
+    expect(() =>
+      command(preflopDone(), { type: "deal", board: ["As", "As", "7c"] }),
+    ).toThrow("same card");
+  });
+  it("leaves showdown and finished hands to their own commands", () => {
+    let s = reachFlop(table());
+    for (let street = 0; street < 2; street++)
+      s = command(finishStreet(s), { type: "deal" });
+    s = finishStreet(s);
+    expect(s.core.phase).toBe("showdown");
+    expect(() => command(s, { type: "board", board: [] })).toThrow(
+      "while the hand is running",
+    );
+  });
+  it("carries entered cards into the next hand's reset", () => {
+    let s = command(preflopDone(), { type: "deal", board: ["As", "Kd", "7c"] });
+    while (s.core.phase === "betting") s = action(s, "fold");
+    expect(s.core.phase).toBe("settled");
+    expect(s.core.board).toHaveLength(3);
+    expect(command(s, { type: "start" }).core.board).toEqual([]);
+  });
+});
+
+describe("matchCards", () => {
+  const ids = (query: string) => matchCards(query).join(" ");
+  it("lists every card, highest rank first, for an empty query", () => {
+    expect(matchCards("")).toHaveLength(52);
+    expect(matchCards("").slice(0, 4)).toEqual(["As", "Ah", "Ad", "Ac"]);
+  });
+  it("filters by rank, including every way to type a ten", () => {
+    expect(ids("a")).toBe("As Ah Ad Ac");
+    for (const ten of ["t", "T", "1", "10"])
+      expect(ids(ten)).toBe("Ts Th Td Tc");
+    expect(ids("7")).toBe("7s 7h 7d 7c");
+  });
+  it("filters by suit letter or glyph", () => {
+    expect(matchCards("h")).toHaveLength(13);
+    expect(matchCards("♥")).toEqual(matchCards("h"));
+  });
+  it("resolves a full card however it is written", () => {
+    for (const typed of ["as", "AS", "a s", "a♠", "sa", "♠a"])
+      expect(matchCards(typed)).toEqual(["As"]);
+    for (const typed of ["10h", "1h", "th", "10♥", "h10"])
+      expect(matchCards(typed)).toEqual(["Th"]);
+  });
+  it("matches nothing for text that is not a card", () => {
+    for (const typed of ["x", "ax", "11", "aaa", "0"])
+      expect(matchCards(typed)).toEqual([]);
+  });
+  it("labels tens with two digits", () => {
+    expect(cardLabel("Th")).toBe("10♥");
   });
 });

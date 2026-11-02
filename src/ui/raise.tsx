@@ -3,7 +3,14 @@ import { legalActions } from "../poker/engine";
 import { type Core } from "../poker/model";
 import { submit } from "../sync/controller";
 import { useSession } from "./use-session";
-import { field, Modal, number, primary, secondary } from "./primitives";
+import {
+  field,
+  Modal,
+  number,
+  NumberInput,
+  primary,
+  secondary,
+} from "./primitives";
 
 export function Raise({ core, close }: { core: Core; close: () => void }) {
   const a = legalActions(core)!;
@@ -40,16 +47,15 @@ export function Raise({ core, close }: { core: Core; close: () => void }) {
       >
         <label className="block font-bold">
           Total bet on this street
-          <input
+          <NumberInput
             autoFocus
             className={`${field} mt-2`}
-            type="number"
             inputMode="numeric"
             step={1}
             min={Math.min(a.minimum, a.maximum)}
             max={a.maximum}
             value={to}
-            onChange={(e) => setTo(Number(e.target.value))}
+            onValueChange={setTo}
             required
           />
         </label>

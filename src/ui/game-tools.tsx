@@ -22,7 +22,15 @@ import {
   undoTool,
   useTool,
 } from "../games/store";
-import { field, Modal, primary, secondary, Tag } from "./primitives";
+import {
+  field,
+  Modal,
+  NumberInput,
+  primary,
+  secondary,
+  Tag,
+  withoutLeadingZeros,
+} from "./primitives";
 import { restoreToolHost, suspendToolPhones } from "../games/phones";
 import { ToolPhones } from "./tool-phones";
 import {
@@ -144,7 +152,7 @@ function ToolSetup({
               min={-1e6}
               max={1e6}
               value={target}
-              onChange={(e) => setTarget(e.target.value)}
+              onChange={(e) => setTarget(withoutLeadingZeros(e.target.value))}
             />
           </label>
           <p className="text-sm text-slate-500">
@@ -257,14 +265,13 @@ function ToolSetup({
           )}
           <label className="block font-bold">
             {kind === "undercover" ? "Undercover players" : "Imposters"}
-            <input
+            <NumberInput
               className={`${field} mt-2`}
-              type="number"
               min={1}
               max={2}
               step={1}
               value={minority}
-              onChange={(e) => setMinority(Number(e.target.value))}
+              onValueChange={setMinority}
             />
           </label>
           <p className="text-sm leading-relaxed text-slate-500">
@@ -431,7 +438,10 @@ export function ScoreBoard({
                 value={values[p.id] || ""}
                 placeholder="0"
                 onChange={(e) =>
-                  setValues({ ...values, [p.id]: e.target.value })
+                  setValues({
+                    ...values,
+                    [p.id]: withoutLeadingZeros(e.target.value),
+                  })
                 }
               />
             </label>
@@ -811,7 +821,10 @@ export function WordBoard({
                     value={votes[id] || ""}
                     placeholder="0"
                     onChange={(e) =>
-                      setVotes({ ...votes, [id]: e.target.value })
+                      setVotes({
+                        ...votes,
+                        [id]: withoutLeadingZeros(e.target.value),
+                      })
                     }
                   />
                 </label>

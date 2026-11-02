@@ -8,7 +8,14 @@ import {
   useClock,
 } from "../chess/store";
 import { at, configSchema, type Config } from "../chess/engine";
-import { field, Modal, primary, secondary, Tag } from "./primitives";
+import {
+  field,
+  Modal,
+  NumberInput,
+  primary,
+  secondary,
+  Tag,
+} from "./primitives";
 import { useWakeLock } from "./use-wake-lock";
 import { ParticipantSetup } from "./participant-setup";
 
@@ -161,18 +168,15 @@ export function Chess() {
           <div className="my-5 grid gap-5 sm:grid-cols-2">
             <label className="block font-bold">
               Increment per move (seconds)
-              <input
+              <NumberInput
                 className={`${field} mt-2`}
-                type="number"
                 inputMode="numeric"
                 min={0}
                 max={3600}
                 step={1}
                 required
                 value={draft.increment}
-                onChange={(e) =>
-                  setDraft({ ...draft, increment: e.target.valueAsNumber })
-                }
+                onValueChange={(increment) => setDraft({ ...draft, increment })}
               />
             </label>
             <label className="block font-bold">

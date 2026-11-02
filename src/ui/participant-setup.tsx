@@ -1,7 +1,14 @@
 import { useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { createId } from "../id";
-import { field, Modal, primary, secondary, Tag } from "./primitives";
+import {
+  field,
+  Modal,
+  primary,
+  secondary,
+  Tag,
+  withoutLeadingZeros,
+} from "./primitives";
 
 export type SetupParticipant = { id: string; name: string; value?: number };
 
@@ -197,7 +204,10 @@ export function ParticipantSetup({
                     required
                     value={editor.value}
                     onChange={(event) =>
-                      setEditor({ ...editor, value: event.target.value })
+                      setEditor({
+                        ...editor,
+                        value: withoutLeadingZeros(event.target.value),
+                      })
                     }
                   />
                 </label>

@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { cardLabel } from "../poker/cards";
 import { legalActions, potTotal } from "../poker/engine";
-import { STREETS, type Command, type Core } from "../poker/model";
+import { boardSize, STREETS, type Command, type Core } from "../poker/model";
 import { clearSession, resumeSession } from "../storage/session";
 import { useSession } from "./use-session";
 import { Modal, number, primary, secondary, Tag } from "./primitives";
 import { Raise } from "./raise";
-import { Cards } from "./cards";
+import { BoardCards, Cards } from "./cards";
 import { submit, useSync } from "../sync/controller";
 import { Phones, PhoneStatus } from "./phones";
 import { Manage } from "./manage";
@@ -24,7 +25,7 @@ export function Table() {
       value && current ? { ...value, revision: current.revision } : null,
     );
   const [panel, setPanel] = useState<
-    "cards" | "raise" | "history" | "manage" | "end" | "phones" | null
+    "board" | "cards" | "raise" | "history" | "manage" | "end" | "phones" | null
   >(null);
   async function send(command: Command, revision?: number) {
     try {
@@ -161,6 +162,27 @@ export function Table() {
               CLOCKWISE SEATS
             </span>
           </div>
+          {c.board.length > 0 && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/70 px-5 py-3">
+              <span className="text-xs font-bold text-slate-500">
+                COMMUNITY CARDS
+              </span>
+              <ul
+                className="flex gap-1"
+                aria-label={`Community cards: ${c.board.map(cardLabel).join(" ")}`}
+              >
+                {c.board.map((card) => (
+                  <li
+                    key={card}
+                    className="board-card"
+                    data-red={card[1] === "h" || card[1] === "d"}
+                  >
+                    {cardLabel(card)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div
             className={`poker-surface ${c.players.length > 6 ? "crowded" : ""}`}
           >
@@ -339,6 +361,17 @@ export function Table() {
                     opponent is all-in.
                   </p>
                 )}
+                {hostControls && c.street > 0 && (
+                  <button
+                    className={`${secondary} mt-3 w-full`}
+                    disabled={disabled}
+                    onClick={() => setPanel("board")}
+                  >
+                    {c.board.length >= boardSize(c.street)
+                      ? "Edit community cards"
+                      : "Add community cards"}
+                  </button>
+                )}
                 <p className="mt-4 text-xs text-slate-400">
                   {hostControls
                     ? "Anyone can record the table’s actions."
@@ -393,11 +426,18 @@ export function Table() {
                   Deal the {STREETS[c.street + 1].toLowerCase()}.
                 </h2>
                 <p className="mb-5 mt-2 text-sm text-slate-500">
-                  Place the physical community cards on the table. Enter the
-                  cards together at showdown.
+                  Place the physical community cards on the table. Enter them
+                  now, or record the deal and add them later.
                 </p>
                 <button
                   className={`${primary} w-full`}
+                  disabled={disabled || !hostControls}
+                  onClick={() => setPanel("board")}
+                >
+                  Enter {STREETS[c.street + 1].toLowerCase()} cards
+                </button>
+                <button
+                  className={`${secondary} mt-3 w-full`}
                   disabled={disabled || !hostControls}
                   onClick={() => void send({ type: "deal" })}
                 >
@@ -411,8 +451,8 @@ export function Table() {
                   Time to show.
                 </h2>
                 <p className="mb-5 mt-2 text-sm text-slate-500">
-                  Enter the community cards and the hands players show. Mucked
-                  hands give up their claim.
+                  Enter any missing community cards and the hands players show.
+                  Mucked hands give up their claim.
                 </p>
                 <button
                   className={`${primary} w-full`}
@@ -560,6 +600,9 @@ export function Table() {
         <Raise core={c} close={() => setPanel(null)} />
       )}
       {panel === "cards" && <Cards core={c} close={() => setPanel(null)} />}
+      {panel === "board" && (
+        <BoardCards core={c} close={() => setPanel(null)} />
+      )}
       {panel === "history" && (
         <Modal title="Table history" close={() => setPanel(null)}>
           {current.events.length ? (

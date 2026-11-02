@@ -66,6 +66,12 @@ describe("phone authorization and retries", () => {
     expect(() =>
       authorizeCommand(session, binding, binding.peer, {
         ...command,
+        command: { type: "board", board: ["As"] },
+      }),
+    ).toThrow(/own player/);
+    expect(() =>
+      authorizeCommand(session, binding, binding.peer, {
+        ...command,
         sessionId: "wrong",
       }),
     ).toThrow(/another table/);

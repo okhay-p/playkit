@@ -79,7 +79,11 @@ export const commandSchema = z.discriminatedUnion("type", [
     kind: z.enum(["fold", "check", "call", "raise", "all-in"]),
     to: chips.optional(),
   }),
-  z.object({ type: z.literal("deal") }),
+  z.object({
+    type: z.literal("deal"),
+    board: z.array(card).max(5).optional(),
+  }),
+  z.object({ type: z.literal("board"), board: z.array(card).max(5) }),
   z.object({
     type: z.literal("showdown"),
     board: z.array(card).max(5),
@@ -122,3 +126,5 @@ export type Result = z.infer<typeof resultSchema>;
 export type Command = z.infer<typeof commandSchema>;
 export type Envelope = z.infer<typeof envelopeSchema>;
 export const STREETS = ["Preflop", "Flop", "Turn", "River"];
+/** How many community cards are on the table once a street has been dealt. */
+export const boardSize = (street: number) => (street === 0 ? 0 : street + 2);
